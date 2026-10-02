@@ -7,6 +7,8 @@
 #include "Mat4.h"
 #include "Quaternion.h"
 
+#include "nanobench.h"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace math;
 

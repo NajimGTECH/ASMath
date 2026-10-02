@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['quaternion_0',['Quaternion',['../classmath_1_1_quaternion.html#a10d07935470cca05304ff8ab48825ac6',1,'math::Quaternion::Quaternion()'],['../classmath_1_1_quaternion.html#a38aa06a5749a1e26b282fc74f0dbd561',1,'math::Quaternion::Quaternion(float w, float x, float y, float z)']]],
+  ['quaternion_5fangle_1',['Quaternion_Angle',['../_quaternion___class___examples_8cpp.html#aa215383b4233e71f5c2e0f72f1d57139',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fconjugate_2',['Quaternion_Conjugate',['../_quaternion___class___examples_8cpp.html#ab13967541908d94c16d2f0e2d601ed35',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fdefaultconstructor_3',['Quaternion_DefaultConstructor',['../_quaternion___class___examples_8cpp.html#a9e8dae7eec7963d1511190d8680310c9',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fdot_4',['Quaternion_Dot',['../_quaternion___class___examples_8cpp.html#abec656252ef034899c418fcc19a24669',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fequality_5',['Quaternion_Equality',['../_quaternion___class___examples_8cpp.html#a8d3c3dd518802a1de56fc7363ec7f1e7',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5ffromaxisangle_6',['Quaternion_FromAxisAngle',['../_quaternion___class___examples_8cpp.html#ad49dae6c39087bcccc6db741d956c3b9',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5ffromeuler_7',['Quaternion_FromEuler',['../_quaternion___class___examples_8cpp.html#a3a0211f008afe830f185bd3c798bb748',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5ffromtorotation_8',['Quaternion_FromToRotation',['../_quaternion___class___examples_8cpp.html#a5cc75cf3e022ee1c53e97b2a4555b88f',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fidentity_9',['Quaternion_Identity',['../_quaternion___class___examples_8cpp.html#a0b7f2a0beca79001687cc7f9112e3641',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5finequality_10',['Quaternion_Inequality',['../_quaternion___class___examples_8cpp.html#aa79497f2b7e3f9ec2680629a39e3c437',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5finverse_11',['Quaternion_Inverse',['../_quaternion___class___examples_8cpp.html#adbd2b528bb33691cc686ecfc86dc0c04',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5flerp_12',['Quaternion_Lerp',['../_quaternion___class___examples_8cpp.html#a214152152a305ec56f74fa1ac8e54061',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5flookrotation_13',['Quaternion_LookRotation',['../_quaternion___class___examples_8cpp.html#a5ed3b2d7f1304281f422cdc4f02cbf04',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fmultiply_14',['Quaternion_Multiply',['../_quaternion___class___examples_8cpp.html#a25af1bf8f0e41feb2286e8809c1dad06',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fnormalize_15',['Quaternion_Normalize',['../_quaternion___class___examples_8cpp.html#a8b146d14225263c2562fa2b72d0e5957',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fparameterizedconstructor_16',['Quaternion_ParameterizedConstructor',['../_quaternion___class___examples_8cpp.html#a7022110486d60adf284e745b6c4e04d7',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5frotatevector_17',['Quaternion_RotateVector',['../_quaternion___class___examples_8cpp.html#ab63edfaa4b4a26f9928d99fcfccc5162',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fslerp_18',['Quaternion_Slerp',['../_quaternion___class___examples_8cpp.html#af3eeb63927ed7f11793db20719d16a0b',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5fslerpunclamped_19',['Quaternion_SlerpUnclamped',['../_quaternion___class___examples_8cpp.html#a7be11eaaf26b9fd638e0541f46781402',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5ftoaxisangle_20',['Quaternion_ToAxisAngle',['../_quaternion___class___examples_8cpp.html#ada796f8dff575443bc0c7ee15d9d1bf8',1,'Quaternion_Class_Examples.cpp']]],
+  ['quaternion_5ftoeuler_21',['Quaternion_ToEuler',['../_quaternion___class___examples_8cpp.html#afd24480607c726b14c0ee46d31709bee',1,'Quaternion_Class_Examples.cpp']]]
+];

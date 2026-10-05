@@ -1,32 +1,155 @@
 #define ANKERL_NANOBENCH_IMPLEMENT
+
 #include "nanobench.h"
+#include "Vector2.h"
+#include "Vector2SSE.h"
+
+#include <iostream>
+#include <vector>
 
 int main()
 {
-    constexpr std::size_t N = 1000;
+    constexpr std::size_t N = 10000;
+    constexpr float T = 0.5f;
+
+    std::vector<math::Vector2<float>> vectorsA;
+    std::vector<math::Vector2<float>> vectorsB;
+
+    vectorsA.reserve(N);
+    vectorsB.reserve(N);
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        vectorsA.emplace_back(
+            static_cast<float>(i),
+            static_cast<float>(i + 1)
+        );
+
+        vectorsB.emplace_back(
+            static_cast<float>(i + 2),
+            static_cast<float>(i + 3)
+        );
+    }
 
     ankerl::nanobench::Bench bench;
-    bench.title("Test nanobench")
-        .unit("element")   // les résultats sont donnés par élément...
-        .batch(N)          // ...car chaque run traite N éléments
-        .relative(true)    // le 1er benchmark sert de référence (100%)
+
+    bench.title("Vector2 Operations")
+        .unit("element")
+        .batch(N)
+        .relative(true)
         .warmup(100);
 
-    bench.run("push_back sans reserve", [&] {
-        std::vector<int> v;
-        for (std::size_t i = 0; i < N; ++i) {
-            v.push_back(static_cast<int>(i));
-        }
-        ankerl::nanobench::doNotOptimizeAway(v.data());
+    // =========================================================
+    // DOT - Classic
+    // =========================================================
+
+    bench.run("Classic Dot", [&]
+        {
+            float result = 0.0f;
+
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                result += vectorsA[i].Dot(vectorsB[i]);
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(result);
         });
 
-    bench.run("push_back avec reserve", [&] {
-        std::vector<int> v;
-        v.reserve(N);
-        for (std::size_t i = 0; i < N; ++i) {
-            v.push_back(static_cast<int>(i));
-        }
-        ankerl::nanobench::doNotOptimizeAway(v.data());
+    // =========================================================
+    // DOT - SIMD
+    // =========================================================
+
+    bench.run("SIMD Dot", [&]
+        {
+            float result = 0.0f;
+
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                result += math::Vector2SSE::Dot(
+                    vectorsA[i],
+                    vectorsB[i]
+                );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(result);
+        });
+
+    // =========================================================
+    // SCALE - Classic
+    // =========================================================
+
+    bench.run("Classic Scale", [&]
+        {
+            math::Vector2<float> result;
+
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                result = math::Vector2<float>::Scale(
+                    vectorsA[i],
+                    vectorsB[i]
+                );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(result);
+        });
+
+    // =========================================================
+    // SCALE - SIMD
+    // =========================================================
+
+    bench.run("SIMD Scale", [&]
+        {
+            math::Vector2<float> result;
+
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                result = math::Vector2SSE::Scale(
+                    vectorsA[i],
+                    vectorsB[i]
+                );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(result);
+        });
+
+    // =========================================================
+    // LERP - Classic
+    // =========================================================
+
+    bench.run("Classic Lerp", [&]
+        {
+            math::Vector2<float> result;
+
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                result = math::Vector2<float>::Lerp(
+                    vectorsA[i],
+                    vectorsB[i],
+                    T
+                );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(result);
+        });
+
+    // =========================================================
+    // LERP - SIMD
+    // =========================================================
+
+    bench.run("SIMD Lerp", [&]
+        {
+            math::Vector2<float> result;
+
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                result = math::Vector2SSE::Lerp(
+                    vectorsA[i],
+                    vectorsB[i],
+                    T
+                );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(result);
         });
 
     return 0;

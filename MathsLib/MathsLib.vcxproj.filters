@@ -11,6 +11,7 @@
     <ClInclude Include="include\Vector3.h" />
     <ClInclude Include="include\Mat3.h" />
     <ClInclude Include="include\Mat4.h" />
+    <ClInclude Include="Vector2SSE.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Vector2.inl" />

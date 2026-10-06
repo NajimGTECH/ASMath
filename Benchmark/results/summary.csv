@@ -1,0 +1,89 @@
+test;n;version;ns_per_elem;err_percent;speedup_vs_ref;seed;cpu
+dot;10;ref  AoS (C++);0.798615;0.472452;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;10;simd AoS (SSE);0.438104;0.440067;1.82289;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;10;ref  SoA (C++);0.557431;0.37106;1.43267;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;10;simd SoA (SSE);0.52599;0.259171;1.51831;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;10;simd SoA + conversion AoS->SoA;1.13889;0.359517;0.701225;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;1000;ref  AoS (C++);0.599955;0.199414;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;1000;simd AoS (SSE);0.261522;0.171993;2.29409;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;1000;ref  SoA (C++);0.153798;0.130429;3.90093;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;1000;simd SoA (SSE);0.150783;0.280251;3.97893;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;1000;simd SoA + conversion AoS->SoA;0.547546;0.129785;1.09572;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;100000;ref  AoS (C++);0.591908;0.306565;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;100000;simd AoS (SSE);0.264234;0.571863;2.24009;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;100000;ref  SoA (C++);0.215351;0.486195;2.74857;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;100000;simd SoA (SSE);0.216092;0.589312;2.73914;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;100000;simd SoA + conversion AoS->SoA;0.611839;0.687976;0.967424;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;4000000;ref  AoS (C++);0.69345;0.728307;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;4000000;simd AoS (SSE);0.362325;1.19573;1.91389;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;4000000;ref  SoA (C++);0.34715;1.96986;1.99755;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;4000000;simd SoA (SSE);0.338644;1.32398;2.04773;42;AMD Ryzen 7 9800X3D 8-Core Processor
+dot;4000000;simd SoA + conversion AoS->SoA;1.3938;0.938166;0.497525;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;10;ref  AoS (C++);3.62715;0.197049;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;10;simd AoS (SSE);1.0726;0.234553;3.38165;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;10;ref  SoA (C++);2.30204;0.352197;1.57562;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;10;simd SoA (SSE);1.19532;0.348141;3.03445;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;10;simd SoA + conversions AoS<->SoA;1.66238;0.290904;2.1819;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;1000;ref  AoS (C++);3.4725;0.188429;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;1000;simd AoS (SSE);0.71223;0.211878;4.87554;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;1000;ref  SoA (C++);2.30605;0.220191;1.50582;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;1000;simd SoA (SSE);0.576872;0.15834;6.01954;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;1000;simd SoA + conversions AoS<->SoA;0.965631;0.352967;3.5961;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;100000;ref  AoS (C++);3.45106;0.128108;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;100000;simd AoS (SSE);0.710037;0.111451;4.8604;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;100000;ref  SoA (C++);2.30504;0.403818;1.49718;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;100000;simd SoA (SSE);0.576074;0.171205;5.99065;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;100000;simd SoA + conversions AoS<->SoA;1.00076;0.218051;3.44843;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;4000000;ref  AoS (C++);3.48595;0.673622;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;4000000;simd AoS (SSE);0.71695;0.569866;4.86219;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;4000000;ref  SoA (C++);2.31973;0.849504;1.50274;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;4000000;simd SoA (SSE);0.605725;0.347898;5.755;42;AMD Ryzen 7 9800X3D 8-Core Processor
+normalize;4000000;simd SoA + conversions AoS<->SoA;1.72345;1.68746;2.02266;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;10;ref  AoS (C++);1.34728;0.280064;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;10;simd AoS 4 pts/iter (SSE);1.00101;0.465982;1.34592;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;10;simd AoS 1 pt/iter (SSE);0.842214;0.0862475;1.59969;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;10;ref  SoA (C++);1.04236;0.474195;1.29253;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;10;simd SoA (SSE);0.995624;0.278552;1.35321;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;10;simd SoA + conversions AoS<->SoA;1.55026;0.877508;0.869069;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;1000;ref  AoS (C++);1.17184;0.138084;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;1000;simd AoS 4 pts/iter (SSE);0.511619;0.286615;2.29045;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;1000;simd AoS 1 pt/iter (SSE);0.782562;1.14066;1.49744;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;1000;ref  SoA (C++);0.317715;0.485604;3.68833;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;1000;simd SoA (SSE);0.307317;0.181413;3.81313;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;1000;simd SoA + conversions AoS<->SoA;0.700124;0.121589;1.67376;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;100000;ref  AoS (C++);1.17292;0.370314;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;100000;simd AoS 4 pts/iter (SSE);0.505717;0.295223;2.31932;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;100000;simd AoS 1 pt/iter (SSE);0.768776;0.27826;1.5257;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;100000;ref  SoA (C++);0.310989;0.498579;3.77157;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;100000;simd SoA (SSE);0.303083;0.448621;3.86996;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;100000;simd SoA + conversions AoS<->SoA;0.711985;0.292629;1.64739;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;4000000;ref  AoS (C++);1.19088;0.425864;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;4000000;simd AoS 4 pts/iter (SSE);0.532075;0.405718;2.23817;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;4000000;simd AoS 1 pt/iter (SSE);0.777537;0.630935;1.5316;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;4000000;ref  SoA (C++);0.373925;1.58475;3.1848;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;4000000;simd SoA (SSE);0.370875;1.63047;3.21099;42;AMD Ryzen 7 9800X3D 8-Core Processor
+transform;4000000;simd SoA + conversions AoS<->SoA;1.49293;1.29767;0.797679;42;AMD Ryzen 7 9800X3D 8-Core Processor
+mat4;10;ref  operator* (C++);14.4508;0.0952852;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+mat4;10;simd (SSE);2.4369;0.378265;5.92998;42;AMD Ryzen 7 9800X3D 8-Core Processor
+mat4;1000;ref  operator* (C++);13.8729;0.367595;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+mat4;1000;simd (SSE);2.4385;0.327951;5.68914;42;AMD Ryzen 7 9800X3D 8-Core Processor
+mat4;100000;ref  operator* (C++);13.899;0.120658;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+mat4;100000;simd (SSE);2.47039;0.581207;5.62623;42;AMD Ryzen 7 9800X3D 8-Core Processor
+mat4;1000000;ref  operator* (C++);14.0524;1.33553;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+mat4;1000000;simd (SSE);3.477;1.20945;4.04153;42;AMD Ryzen 7 9800X3D 8-Core Processor
+aos_to_soa;10;ref  AoS->SoA (C++);0.607584;0.188869;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+aos_to_soa;10;simd AoS->SoA (SSE);0.391486;0.149872;1.552;42;AMD Ryzen 7 9800X3D 8-Core Processor
+soa_to_aos;10;ref  SoA->AoS (C++);0.58211;0.818637;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+soa_to_aos;10;simd SoA->AoS (SSE);0.365267;0.262593;1.59366;42;AMD Ryzen 7 9800X3D 8-Core Processor
+aos_to_soa;1000;ref  AoS->SoA (C++);0.304494;1.84505;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+aos_to_soa;1000;simd AoS->SoA (SSE);0.202563;0.238652;1.5032;42;AMD Ryzen 7 9800X3D 8-Core Processor
+soa_to_aos;1000;ref  SoA->AoS (C++);0.356278;0.200465;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+soa_to_aos;1000;simd SoA->AoS (SSE);0.200144;0.249256;1.7801;42;AMD Ryzen 7 9800X3D 8-Core Processor
+aos_to_soa;100000;ref  AoS->SoA (C++);0.325615;1.2048;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+aos_to_soa;100000;simd AoS->SoA (SSE);0.195392;0.432738;1.66647;42;AMD Ryzen 7 9800X3D 8-Core Processor
+soa_to_aos;100000;ref  SoA->AoS (C++);0.358671;0.503819;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+soa_to_aos;100000;simd SoA->AoS (SSE);0.20058;1.21787;1.78817;42;AMD Ryzen 7 9800X3D 8-Core Processor
+aos_to_soa;4000000;ref  AoS->SoA (C++);0.440067;2.63148;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+aos_to_soa;4000000;simd AoS->SoA (SSE);0.370569;6.74793;1.18754;42;AMD Ryzen 7 9800X3D 8-Core Processor
+soa_to_aos;4000000;ref  SoA->AoS (C++);0.4211;1.30276;1;42;AMD Ryzen 7 9800X3D 8-Core Processor
+soa_to_aos;4000000;simd SoA->AoS (SSE);0.288855;4.10127;1.45782;42;AMD Ryzen 7 9800X3D 8-Core Processor

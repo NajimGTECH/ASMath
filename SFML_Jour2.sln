@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MathsLib", "MathsLib\MathsL
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTests", "UnitTests\UnitTests.vcxproj", "{50E4480E-316F-C5F6-131B-DDDC92AB14F8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Benchmark", "Benchmark\Benchmark.vcxproj", "{DF8F047E-426D-4F1B-9226-1D0A27068A7A}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{9C8CB701-102D-CF49-A3E0-89AC09D42C2C}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
@@ -33,6 +35,10 @@ Global
 		{50E4480E-316F-C5F6-131B-DDDC92AB14F8}.Debug|x64.Build.0 = Debug|x64
 		{50E4480E-316F-C5F6-131B-DDDC92AB14F8}.Release|x64.ActiveCfg = Release|x64
 		{50E4480E-316F-C5F6-131B-DDDC92AB14F8}.Release|x64.Build.0 = Release|x64
+		{DF8F047E-426D-4F1B-9226-1D0A27068A7A}.Debug|x64.ActiveCfg = Debug|x64
+		{DF8F047E-426D-4F1B-9226-1D0A27068A7A}.Debug|x64.Build.0 = Debug|x64
+		{DF8F047E-426D-4F1B-9226-1D0A27068A7A}.Release|x64.ActiveCfg = Release|x64
+		{DF8F047E-426D-4F1B-9226-1D0A27068A7A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -142,6 +142,17 @@ namespace math
         Vector3<T> MultiplyPoint(const Vector3<T>& v) const;
 
         /**
+         * @brief Transforms a 3D point by an affine matrix (implicit w = 1, no perspective divide).
+         *
+         * Row-vector convention used by this library: p' = p * M, translation stored in row 3.
+         * x' = x*m[0][0] + y*m[1][0] + z*m[2][0] + m[3][0] (same pattern for y' and z').
+         * Column 3 is ignored, the matrix is assumed to be affine.
+         * @param v The input 3D point.
+         * @return The transformed point.
+         */
+        Vector3<T> MultiplyPointAffine(const Vector3<T>& v) const;
+
+        /**
          * @brief Multiplies this matrix by a direction vector (ignores translation).
          * @param v The input 3D vector.
          * @return The transformed direction.

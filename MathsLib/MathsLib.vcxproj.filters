@@ -4,6 +4,8 @@
     <ClCompile Include="src\Quaternion.cpp" />
     <ClCompile Include="examples\Quaternion_Class_Examples.cpp" />
     <ClCompile Include="examples\Mat4_Class_Examples.cpp" />
+    <ClCompile Include="src\Vector3Simd.cpp" />
+    <ClCompile Include="src\Mat4Simd.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Quaternion.h" />
@@ -11,6 +13,9 @@
     <ClInclude Include="include\Vector3.h" />
     <ClInclude Include="include\Mat3.h" />
     <ClInclude Include="include\Mat4.h" />
+    <ClInclude Include="include\Vector3Simd.h" />
+    <ClInclude Include="include\Mat4Simd.h" />
+    <ClInclude Include="src\SimdTranspose.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Vector2.inl" />

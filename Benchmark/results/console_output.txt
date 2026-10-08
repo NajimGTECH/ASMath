@@ -1,0 +1,171 @@
+=== ASM / SIMD math library benchmark: C++ reference vs SSE/SSE2 ===
+CPU          : AMD Ryzen 7 9800X3D 8-Core Processor
+Instructions : SSE SSE2 SSE3 SSSE3 SSE4.1 SSE4.2 AVX FMA AVX2 AVX-512F
+Compiler     : MSVC 19.38.33145, Release x64, /O2, default x64 instruction set (SSE2, no AVX, no FMA), /fp:precise, auto-vectorization allowed (default with /O2)
+Code used    : SSE/SSE2 intrinsics only (the AVX of the CPU is not used)
+Seed 42, 31 samples of >= 2.0 ms after 50 ms of warm-up per version
+Re-run with : Benchmark.exe --suite --seed 42 --samples 31 --out results
+
+=== dot, n = 10 : Dot products between two arrays of Vector3 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 0.693      0.691      0.697    0.8%     1.00x  reference
+simd-aos                0.365      0.363      0.371    2.3%     1.90x  identical
+asm-aos                 0.652      0.644      0.674    4.6%     1.06x  identical
+ref-soa                 0.488      0.486      0.495    1.7%     1.42x  identical
+simd-soa                0.462      0.461      0.469    1.8%     1.50x  identical
+simd-soa+conv           1.403      1.400      1.422    1.5%     0.49x  identical
+
+=== dot, n = 1000 : Dot products between two arrays of Vector3 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 0.599      0.595      0.614    3.1%     1.00x  reference
+simd-aos                0.264      0.263      0.266    1.3%     2.27x  identical
+asm-aos                 0.586      0.581      0.598    3.0%     1.02x  identical
+ref-soa                 0.155      0.152      0.172   13.3%     3.87x  identical
+simd-soa                0.151      0.150      0.153    1.9%     3.97x  identical
+simd-soa+conv           0.780      0.776      0.784    1.1%     0.77x  identical
+
+=== dot, n = 100000 : Dot products between two arrays of Vector3 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 0.605      0.603      0.606    0.5%     1.00x  reference
+simd-aos                0.266      0.265      0.272    2.7%     2.27x  identical
+asm-aos                 0.604      0.602      0.606    0.7%     1.00x  identical
+ref-soa                 0.219      0.219      0.220    0.7%     2.76x  identical
+simd-soa                0.219      0.219      0.221    0.7%     2.76x  identical
+simd-soa+conv           0.887      0.885      0.891    0.6%     0.68x  identical
+
+=== dot, n = 4000000 : Dot products between two arrays of Vector3 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 0.653      0.649      0.683    5.2%     1.00x  reference
+simd-aos                0.378      0.372      0.384    3.1%     1.73x  identical
+asm-aos                 0.650      0.647      0.659    1.7%     1.00x  identical
+ref-soa                 0.340      0.334      0.342    2.3%     1.92x  identical
+simd-soa                0.328      0.322      0.337    4.5%     1.99x  identical
+simd-soa+conv           1.716      1.671      1.757    5.0%     0.38x  identical
+
+=== normalize, n = 10 : Normalization of an array of Vector3 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 3.600      3.596      3.612    0.5%     1.00x  reference
+simd-aos                1.052      1.051      1.054    0.3%     3.42x  identical
+ref-soa                 4.122      4.118      4.157    0.9%     0.87x  identical
+simd-soa                1.150      1.145      1.155    0.8%     3.13x  identical
+simd-soa+conv           2.796      2.791      2.812    0.8%     1.29x  identical
+simd-aos-approx         0.603      0.603      0.609    1.0%     5.97x  approx (max diff 7.34e-05)
+
+=== normalize, n = 1000 : Normalization of an array of Vector3 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 3.448      3.447      3.453    0.2%     1.00x  reference
+simd-aos                0.704      0.704      0.705    0.2%     4.89x  identical
+ref-soa                 3.886      3.885      3.895    0.3%     0.89x  identical
+simd-soa                0.574      0.574      0.574    0.2%     6.01x  identical
+simd-soa+conv           1.235      1.235      1.238    0.2%     2.79x  identical
+simd-aos-approx         0.477      0.476      0.478    0.4%     7.23x  approx (max diff 0.000205)
+
+=== normalize, n = 100000 : Normalization of an array of Vector3 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 3.449      3.446      3.452    0.2%     1.00x  reference
+simd-aos                0.705      0.704      0.711    0.9%     4.89x  identical
+ref-soa                 3.898      3.892      3.908    0.4%     0.88x  identical
+simd-soa                0.585      0.581      0.620    6.7%     5.90x  identical
+simd-soa+conv           1.274      1.271      1.313    3.3%     2.71x  identical
+simd-aos-approx         0.477      0.476      0.480    0.8%     7.24x  approx (max diff 0.000238)
+
+=== normalize, n = 4000000 : Normalization of an array of Vector3 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 3.479      3.471      3.622    4.3%     1.00x  reference
+simd-aos                0.715      0.710      0.722    1.6%     4.86x  identical
+ref-soa                 4.040      3.951      4.094    3.5%     0.86x  identical
+simd-soa                0.606      0.605      0.611    0.9%     5.74x  identical
+simd-soa+conv           1.928      1.915      1.953    2.0%     1.80x  identical
+simd-aos-approx         0.501      0.499      0.506    1.5%     6.94x  approx (max diff 0.000257)
+
+=== transform, n = 10 : Transformation of 3D points by the same affine Mat4 (w = 1) ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 1.354      1.353      1.369    1.2%     1.00x  reference
+simd-aos                1.009      1.008      1.011    0.2%     1.34x  identical
+simd-aos-naive          0.704      0.704      0.705    0.2%     1.92x  identical
+ref-soa                 0.934      0.932      0.939    0.8%     1.45x  identical
+simd-soa                0.916      0.916      0.918    0.3%     1.48x  identical
+simd-soa+conv           1.923      1.921      1.930    0.5%     0.70x  identical
+
+=== transform, n = 1000 : Transformation of 3D points by the same affine Mat4 (w = 1) ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 1.170      1.170      1.189    1.7%     1.00x  reference
+simd-aos                0.513      0.513      0.515    0.4%     2.28x  identical
+simd-aos-naive          0.674      0.673      0.676    0.4%     1.74x  identical
+ref-soa                 0.316      0.316      0.318    0.6%     3.70x  identical
+simd-soa                0.343      0.342      0.344    0.5%     3.41x  identical
+simd-soa+conv           1.006      1.005      1.007    0.2%     1.16x  identical
+
+=== transform, n = 100000 : Transformation of 3D points by the same affine Mat4 (w = 1) ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 1.167      1.166      1.168    0.1%     1.00x  reference
+simd-aos                0.515      0.513      0.517    0.8%     2.27x  identical
+simd-aos-naive          0.678      0.676      0.682    0.9%     1.72x  identical
+ref-soa                 0.317      0.316      0.318    0.5%     3.69x  identical
+simd-soa                0.341      0.340      0.342    0.5%     3.43x  identical
+simd-soa+conv           1.041      1.039      1.045    0.6%     1.12x  identical
+
+=== transform, n = 4000000 : Transformation of 3D points by the same affine Mat4 (w = 1) ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref-aos                 1.181      1.175      1.189    1.2%     1.00x  reference
+simd-aos                0.531      0.530      0.535    1.0%     2.22x  identical
+simd-aos-naive          0.681      0.680      0.683    0.5%     1.73x  identical
+ref-soa                 0.375      0.373      0.379    1.7%     3.15x  identical
+simd-soa                0.389      0.386      0.394    1.8%     3.04x  identical
+simd-soa+conv           1.716      1.694      1.746    3.0%     0.69x  identical
+
+=== convert, n = 10 : AoS <-> SoA conversions alone (cost of changing the layout) ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+aos-to-soa              0.505      0.505      0.506    0.2%         -  -
+soa-to-aos              0.495      0.493      0.505    2.4%         -  -
+
+=== convert, n = 1000 : AoS <-> SoA conversions alone (cost of changing the layout) ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+aos-to-soa              0.298      0.298      0.301    1.2%         -  -
+soa-to-aos              0.354      0.354      0.355    0.3%         -  -
+
+=== convert, n = 100000 : AoS <-> SoA conversions alone (cost of changing the layout) ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+aos-to-soa              0.321      0.320      0.324    1.2%         -  -
+soa-to-aos              0.354      0.354      0.355    0.3%         -  -
+
+=== convert, n = 4000000 : AoS <-> SoA conversions alone (cost of changing the layout) ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+aos-to-soa              0.453      0.443      0.466    4.9%         -  -
+soa-to-aos              0.428      0.421      0.439    4.2%         -  -
+
+=== mat4mul, n = 10 : (extension) Products of two arrays of Mat4 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref                    11.476     11.375     11.508    1.2%     1.00x  reference
+simd                    2.610      2.608      2.615    0.3%     4.40x  identical
+
+=== mat4mul, n = 1000 : (extension) Products of two arrays of Mat4 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref                    11.105     11.100     11.121    0.2%     1.00x  reference
+simd                    2.636      2.629      2.641    0.4%     4.21x  identical
+
+=== mat4mul, n = 100000 : (extension) Products of two arrays of Mat4 ===
+version                median         q1         q3    IQR%   speedup  check
+                    (ns/elem)                                 (ref/v)
+ref                    11.200     11.184     11.242    0.5%     1.00x  reference
+simd                    2.759      2.748      2.793    1.7%     4.06x  identical
+
+Raw results written to results/ (summary.csv, samples.csv, run_info.txt)

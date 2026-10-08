@@ -63,9 +63,12 @@ namespace math
     template <typename T>
     Mat4<T> Mat4<T>::TRS(const Vector3<T>& position, const Quaternion& rotation, const Vector3<T>& scale)
     {
+        // Row vectors: p' = p * S * R * T, so the scale must be on the left of the rotation.
+        // (The old code computed R * S, which rotates first and then scales along the world axes:
+        //  wrong as soon as the scale is not uniform.)
         Mat4<T> rot = Rotate(rotation);
         Mat4<T> scl = Scale(scale);
-        Mat4<T> trs = rot * scl;
+        Mat4<T> trs = scl * rot;
         trs.m[3][0] = position.x;
         trs.m[3][1] = position.y;
         trs.m[3][2] = position.z;
@@ -81,9 +84,12 @@ namespace math
 
         result.m[0][0] = f / aspect;
         result.m[1][1] = f;
+        // Row vectors: w' = x*m[0][3] + y*m[1][3] + z*m[2][3] + m[3][3], we want w' = -z,
+        // so the -1 goes in m[2][3] and the depth offset in m[3][2].
+        // (The old code had these two values swapped, which is the column-vector layout.)
         result.m[2][2] = (farZ + nearZ) / (nearZ - farZ);
-        result.m[2][3] = (static_cast<T>(2) * farZ * nearZ) / (nearZ - farZ);
-        result.m[3][2] = static_cast<T>(-1);
+        result.m[2][3] = static_cast<T>(-1);
+        result.m[3][2] = (static_cast<T>(2) * farZ * nearZ) / (nearZ - farZ);
 
         return result;
     }
@@ -301,7 +307,7 @@ namespace math
         if (det == 0)
             throw std::runtime_error("Matrix is singular and cannot be inverted.");
 
-        det = 1.0 / det;
+        det = static_cast<T>(1) / det;
 
         Mat4<T> result;
         for (int i = 0; i < 16; i++)
@@ -410,9 +416,11 @@ namespace math
     template <typename T>
     Vector3<T> Mat4<T>::MultiplyVector(const Vector3<T>& v) const
     {
-        T x = v.x * m[0][0] + v.y * m[0][1] + v.z * m[0][2];
-        T y = v.x * m[1][0] + v.y * m[1][1] + v.z * m[1][2];
-        T z = v.x * m[2][0] + v.y * m[2][1] + v.z * m[2][2];
+        // Same row-vector convention as MultiplyPoint, but with w = 0 (no translation).
+        // (The old code used m[0][1], m[0][2] for x', i.e. the column-vector convention.)
+        T x = v.x * m[0][0] + v.y * m[1][0] + v.z * m[2][0];
+        T y = v.x * m[0][1] + v.y * m[1][1] + v.z * m[2][1];
+        T z = v.x * m[0][2] + v.y * m[1][2] + v.z * m[2][2];
         return Vector3<T>(x, y, z);
     }
 
@@ -443,6 +451,12 @@ namespace math
     {
         // Convert upper-left 3x3 to quaternion using standard matrix-to-quaternion conversion.
         // Assumes matrix is rotation (possibly with scale). We remove scale first.
+        //
+        // With row vectors, row i of the matrix is (scale_i * rotated axis i). The textbook formula
+        // below is written for the column-vector rotation matrix R, which is the transpose of ours:
+        // r_ij = m[j][i] / scale_j.
+        // (The old code divided by the column scale and did not transpose, so it returned the
+        //  inverse rotation.)
         Vector3<T> scale = ExtractScale();
         T sx = scale.x, sy = scale.y, sz = scale.z;
         T invSx = (sx != static_cast<T>(0)) ? static_cast<T>(1) / sx : static_cast<T>(1);
@@ -450,13 +464,13 @@ namespace math
         T invSz = (sz != static_cast<T>(0)) ? static_cast<T>(1) / sz : static_cast<T>(1);
 
         T r00 = m[0][0] * invSx;
-        T r01 = m[0][1] * invSy;
-        T r02 = m[0][2] * invSz;
-        T r10 = m[1][0] * invSx;
+        T r01 = m[1][0] * invSy;
+        T r02 = m[2][0] * invSz;
+        T r10 = m[0][1] * invSx;
         T r11 = m[1][1] * invSy;
-        T r12 = m[1][2] * invSz;
-        T r20 = m[2][0] * invSx;
-        T r21 = m[2][1] * invSy;
+        T r12 = m[2][1] * invSz;
+        T r20 = m[0][2] * invSx;
+        T r21 = m[1][2] * invSy;
         T r22 = m[2][2] * invSz;
 
         T trace = r00 + r11 + r22;
@@ -464,7 +478,7 @@ namespace math
 
         if (trace > static_cast<T>(0))
         {
-            T s = std::sqrt(static_cast<double>(trace) + 1.0) * static_cast<T>(2);
+            T s = static_cast<T>(std::sqrt(static_cast<double>(trace) + 1.0)) * static_cast<T>(2);
             qw = static_cast<T>(0.25) * s;
             qx = (r21 - r12) / s;
             qy = (r02 - r20) / s;
@@ -472,7 +486,7 @@ namespace math
         }
         else if ((r00 > r11) && (r00 > r22))
         {
-            T s = std::sqrt(static_cast<double>(1.0 + r00 - r11 - r22)) * static_cast<T>(2);
+            T s = static_cast<T>(std::sqrt(static_cast<double>(1.0 + r00 - r11 - r22))) * static_cast<T>(2);
             qw = (r21 - r12) / s;
             qx = static_cast<T>(0.25) * s;
             qy = (r01 + r10) / s;
@@ -480,7 +494,7 @@ namespace math
         }
         else if (r11 > r22)
         {
-            T s = std::sqrt(static_cast<double>(1.0 + r11 - r00 - r22)) * static_cast<T>(2);
+            T s = static_cast<T>(std::sqrt(static_cast<double>(1.0 + r11 - r00 - r22))) * static_cast<T>(2);
             qw = (r02 - r20) / s;
             qx = (r01 + r10) / s;
             qy = static_cast<T>(0.25) * s;
@@ -488,7 +502,7 @@ namespace math
         }
         else
         {
-            T s = std::sqrt(static_cast<double>(1.0 + r22 - r00 - r11)) * static_cast<T>(2);
+            T s = static_cast<T>(std::sqrt(static_cast<double>(1.0 + r22 - r00 - r11))) * static_cast<T>(2);
             qw = (r10 - r01) / s;
             qx = (r02 + r20) / s;
             qy = (r12 + r21) / s;
@@ -509,19 +523,20 @@ namespace math
         if (std::fabs(static_cast<double>(m[2][3])) > EPS) return false;
         if (std::fabs(static_cast<double>(m[3][3] - static_cast<T>(1))) > EPS) return false;
 
-        Vector3<T> col0 = GetColumn(0);
-        Vector3<T> col1 = GetColumn(1);
-        Vector3<T> col2 = GetColumn(2);
+        // Row vectors: the axes of the transform are the rows 0, 1, 2 (not the columns).
+        Vector3<T> row0 = GetRow(0);
+        Vector3<T> row1 = GetRow(1);
+        Vector3<T> row2 = GetRow(2);
 
         // Non-zero scale?
         Vector3<T> scale = ExtractScale();
         if (scale.x == static_cast<T>(0) || scale.y == static_cast<T>(0) || scale.z == static_cast<T>(0))
             return false;
 
-        // Normalize columns by scale and check orthonormality
-        Vector3<T> n0 = Vector3<T>(col0.x / scale.x, col0.y / scale.x, col0.z / scale.x).Normalized();
-        Vector3<T> n1 = Vector3<T>(col1.x / scale.y, col1.y / scale.y, col1.z / scale.y).Normalized();
-        Vector3<T> n2 = Vector3<T>(col2.x / scale.z, col2.y / scale.z, col2.z / scale.z).Normalized();
+        // Normalize the axes and check that they are orthogonal
+        Vector3<T> n0 = row0.Normalized();
+        Vector3<T> n1 = row1.Normalized();
+        Vector3<T> n2 = row2.Normalized();
 
         double d01 = std::fabs(static_cast<double>(n0.Dot(n1)));
         double d02 = std::fabs(static_cast<double>(n0.Dot(n2)));

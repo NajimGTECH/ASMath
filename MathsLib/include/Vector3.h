@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <algorithm>
 #include <cmath>
 #include <numbers>
 
@@ -112,10 +113,17 @@ namespace math
         /** @brief Returns the squared magnitude (avoids using sqrt). */
         T LengthSquared() const;
 
-        /** @brief Returns a normalized (unit length) copy of the vector. */
+        /**
+         * @brief Returns a normalized (unit length) copy of the vector.
+         *
+         * **Zero vector**: if the length is not strictly positive, the result is (0, 0, 0).
+         * This covers the null vector, but also a length that is NaN (any NaN component), and
+         * very small vectors whose squared length underflows to 0 (components below ~1e-19).
+         * Components above ~1e19 overflow the squared length (infinite length): not supported.
+         */
         Vector3 Normalized() const;
 
-        /** @brief Normalizes this vector in-place. */
+        /** @brief Normalizes this vector in-place. Same zero-vector rule as Normalized(). */
         void Normalize();
 
         /** @brief Computes the Euclidean distance between two vectors. */
@@ -163,7 +171,7 @@ namespace math
         /**
          * @brief Computes the angle between two vectors in degrees.
          *
-         * The result is always between 0° and 180°.
+         * The result is always between 0 and 180 degrees.
          */
         static T Angle(const Vector3& a, const Vector3& b);
     };

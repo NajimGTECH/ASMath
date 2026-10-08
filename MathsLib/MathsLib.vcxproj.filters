@@ -1,26 +1,82 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\Quaternion.cpp" />
-    <ClCompile Include="examples\Quaternion_Class_Examples.cpp" />
-    <ClCompile Include="examples\Mat4_Class_Examples.cpp" />
-    <ClCompile Include="src\Vector3Simd.cpp" />
-    <ClCompile Include="src\Mat4Simd.cpp" />
+    <Filter Include="include">
+      <UniqueIdentifier>{3b1c6a43-6f0e-4b0e-9a55-7d0a3f0f2a11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{9c2f3d7e-1a52-4c8b-8e4f-5b6d7a8e9f22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\asm">
+      <UniqueIdentifier>{d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="examples">
+      <UniqueIdentifier>{a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c44}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Quaternion.h" />
-    <ClInclude Include="include\Vector2.h" />
-    <ClInclude Include="include\Vector3.h" />
-    <ClInclude Include="include\Mat3.h" />
-    <ClInclude Include="include\Mat4.h" />
-    <ClInclude Include="include\Vector3Simd.h" />
-    <ClInclude Include="include\Mat4Simd.h" />
-    <ClInclude Include="src\SimdTranspose.h" />
+    <ClCompile Include="src\Quaternion.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Vector3Batch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mat4Batch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="examples\Quaternion_Class_Examples.cpp">
+      <Filter>examples</Filter>
+    </ClCompile>
+    <ClCompile Include="examples\Mat4_Class_Examples.cpp">
+      <Filter>examples</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\Vector2.inl" />
-    <None Include="src\Vector3.inl" />
-    <None Include="src\Mat3.inl" />
-    <None Include="src\Mat4.inl" />
+    <ClInclude Include="include\AsmFunctions.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Quaternion.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Vector2.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Vector3.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Vector3Batch.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mat3.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mat4.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mat4Batch.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SseHelpers.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="src\asm\Dot3.asm">
+      <Filter>src\asm</Filter>
+    </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Vector2.inl">
+      <Filter>src</Filter>
+    </None>
+    <None Include="src\Vector3.inl">
+      <Filter>src</Filter>
+    </None>
+    <None Include="src\Mat3.inl">
+      <Filter>src</Filter>
+    </None>
+    <None Include="src\Mat4.inl">
+      <Filter>src</Filter>
+    </None>
   </ItemGroup>
 </Project>

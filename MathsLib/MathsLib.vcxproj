@@ -11,21 +11,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\AsmFunctions.h" />
     <ClInclude Include="include\Mat3.h" />
     <ClInclude Include="include\Mat4.h" />
-    <ClInclude Include="include\Mat4Simd.h" />
+    <ClInclude Include="include\Mat4Batch.h" />
     <ClInclude Include="include\Quaternion.h" />
     <ClInclude Include="include\Vector2.h" />
     <ClInclude Include="include\Vector3.h" />
-    <ClInclude Include="include\Vector3Simd.h" />
-    <ClInclude Include="src\SimdTranspose.h" />
+    <ClInclude Include="include\Vector3Batch.h" />
+    <ClInclude Include="src\SseHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="examples\Mat4_Class_Examples.cpp" />
     <ClCompile Include="examples\Quaternion_Class_Examples.cpp" />
-    <ClCompile Include="src\Mat4Simd.cpp" />
+    <ClCompile Include="src\Mat4Batch.cpp" />
     <ClCompile Include="src\Quaternion.cpp" />
-    <ClCompile Include="src\Vector3Simd.cpp" />
+    <ClCompile Include="src\Vector3Batch.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="src\asm\Dot3.asm" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Mat3.inl" />
@@ -51,11 +55,14 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <!-- No /GL: each .obj contains real machine code, so dumpbin /disasm can read it.
+         The benchmark calls the functions through a pointer anyway (no cross-module inlining needed). -->
+    <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -82,7 +89,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\Nano;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -101,6 +108,13 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- Explicit options used for every measurement (see README / docs/REPORT.md):
+           /O2, /fp:precise, default x64 instruction set (SSE2, no AVX, no FMA). -->
+      <Optimization>MaxSpeed</Optimization>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <!-- /Qvec-report:2 prints, for every loop, whether the compiler auto-vectorized it and why not. -->
+      <AdditionalOptions>/Qvec-report:2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -110,5 +124,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>

@@ -7,7 +7,7 @@
 #include "Mat4.h"
 #include "Quaternion.h"
 
-#include "nanobench.h"
+#include <numbers>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace math;
@@ -937,6 +937,113 @@ namespace MathsLibTests
 		{
 			Mat4<float> m = Mat4<float>::TRS({ 0, 0, 0 }, Quaternion::Identity(), { 1, 1, 1 });
 			Assert::IsTrue(m.ValidTRS());
+		}
+
+		// --------------------------------------------------------------------
+		// Conventions (row vectors, p' = p * M) - regression tests for the bugs
+		// found during the audit of the library (see docs/REPORT.md)
+		// --------------------------------------------------------------------
+
+		static Quaternion RotationZ90()
+		{
+			return Quaternion::FromAxisAngle({ 0.0f, 0.0f, 1.0f }, std::numbers::pi_v<float> / 2.0f);
+		}
+
+		TEST_METHOD(TestRotateMatchesQuaternion)
+		{
+			// The matrix built from a quaternion must rotate a point like the quaternion itself.
+			Quaternion q = Quaternion::FromAxisAngle({ 1.0f, 2.0f, 3.0f }, 0.8f);
+			Mat4<float> m = Mat4<float>::Rotate(q);
+			Vector3<float> v(4.0f, -5.0f, 6.0f);
+			Vector3<float> expected = q.RotateVector(v);
+			Vector3<float> actual = m.MultiplyPoint(v);
+			Assert::AreEqual(expected.x, actual.x, 1e-5f);
+			Assert::AreEqual(expected.y, actual.y, 1e-5f);
+			Assert::AreEqual(expected.z, actual.z, 1e-5f);
+		}
+
+		TEST_METHOD(TestMultiplyVectorUsesRowVectors)
+		{
+			// Bug fixed: MultiplyVector used the column-vector convention. With a rotation of +90 degrees
+			// around Z, the direction X must become Y (like MultiplyPoint), and the translation is ignored.
+			Mat4<float> m = Mat4<float>::Rotate(RotationZ90()) * Mat4<float>::Translate({ 5.0f, 6.0f, 7.0f });
+			Vector3<float> d = m.MultiplyVector({ 1.0f, 0.0f, 0.0f });
+			Assert::AreEqual(0.0f, d.x, 1e-6f);
+			Assert::AreEqual(1.0f, d.y, 1e-6f);
+			Assert::AreEqual(0.0f, d.z, 1e-6f);
+		}
+
+		TEST_METHOD(TestTRSOrderWithNonUniformScale)
+		{
+			// Bug fixed: TRS computed R * S (rotate, then scale along world axes).
+			// Expected: scale (2, 1, 1), then rotate +90 degrees around Z, then translate (10, 0, 0).
+			// (1, 0, 0) -> (2, 0, 0) -> (0, 2, 0) -> (10, 2, 0)
+			Mat4<float> m = Mat4<float>::TRS({ 10.0f, 0.0f, 0.0f }, RotationZ90(), { 2.0f, 1.0f, 1.0f });
+			Vector3<float> p = m.MultiplyPoint({ 1.0f, 0.0f, 0.0f });
+			Assert::AreEqual(10.0f, p.x, 1e-5f);
+			Assert::AreEqual(2.0f, p.y, 1e-5f);
+			Assert::AreEqual(0.0f, p.z, 1e-5f);
+
+			Vector3<float> scale = m.ExtractScale();
+			Assert::AreEqual(2.0f, scale.x, 1e-5f);
+			Assert::AreEqual(1.0f, scale.y, 1e-5f);
+			Assert::AreEqual(1.0f, scale.z, 1e-5f);
+			Assert::IsTrue(m.ValidTRS());
+		}
+
+		TEST_METHOD(TestExtractRotationRoundTrip)
+		{
+			// Bug fixed: ExtractRotation returned the inverse rotation (missing transpose).
+			Quaternion q = Quaternion::FromAxisAngle({ 0.3f, -1.0f, 0.5f }, 1.1f);
+			Mat4<float> m = Mat4<float>::TRS({ 1.0f, 2.0f, 3.0f }, q, { 2.0f, 3.0f, 0.5f });
+			Quaternion extracted = m.ExtractRotation();
+
+			Vector3<float> v(1.0f, 2.0f, 3.0f);
+			Vector3<float> expected = q.RotateVector(v);
+			Vector3<float> actual = extracted.RotateVector(v);
+			Assert::AreEqual(expected.x, actual.x, 1e-4f);
+			Assert::AreEqual(expected.y, actual.y, 1e-4f);
+			Assert::AreEqual(expected.z, actual.z, 1e-4f);
+		}
+
+		TEST_METHOD(TestPerspectiveNearAndFarPlanes)
+		{
+			// Bug fixed: the -1 and the depth offset were swapped (column-vector layout).
+			// A point on the near plane (z = -near) must give NDC depth -1, on the far plane +1.
+			const float nearZ = 0.1f, farZ = 100.0f;
+			Mat4<float> m = Mat4<float>::Perspective(std::numbers::pi_v<float> / 2.0f, 1.0f, nearZ, farZ);
+			Assert::AreEqual(-1.0f, m(2, 3), 1e-6f);
+
+			Assert::AreEqual(-1.0f, m.MultiplyPoint({ 0.0f, 0.0f, -nearZ }).z, 1e-4f);
+			Assert::AreEqual(1.0f, m.MultiplyPoint({ 0.0f, 0.0f, -farZ }).z, 1e-4f);
+		}
+
+		TEST_METHOD(TestCompositionOrder)
+		{
+			// p * A * B applies A first: translate (1, 0, 0) then rotate +90 degrees around Z.
+			// (1, 0, 0) -> (2, 0, 0) -> (0, 2, 0). In the other order: (0, 1, 0) -> (1, 1, 0).
+			Mat4<float> t = Mat4<float>::Translate({ 1.0f, 0.0f, 0.0f });
+			Mat4<float> r = Mat4<float>::Rotate(RotationZ90());
+
+			Vector3<float> p1 = (t * r).MultiplyPointAffine({ 1.0f, 0.0f, 0.0f });
+			Assert::AreEqual(0.0f, p1.x, 1e-6f);
+			Assert::AreEqual(2.0f, p1.y, 1e-6f);
+
+			Vector3<float> p2 = (r * t).MultiplyPointAffine({ 1.0f, 0.0f, 0.0f });
+			Assert::AreEqual(1.0f, p2.x, 1e-6f);
+			Assert::AreEqual(1.0f, p2.y, 1e-6f);
+		}
+
+		TEST_METHOD(TestMultiplyPointAffineEqualsMultiplyPoint)
+		{
+			// For an affine matrix w' = 1, so MultiplyPoint (with the w test) and MultiplyPointAffine agree.
+			Mat4<float> m = Mat4<float>::TRS({ 1.0f, -2.0f, 3.0f }, Quaternion::FromAxisAngle({ 1.0f, 1.0f, 1.0f }, 0.5f), { 1.0f, 2.0f, 3.0f });
+			Vector3<float> v(0.5f, 7.0f, -3.0f);
+			Vector3<float> a = m.MultiplyPoint(v);
+			Vector3<float> b = m.MultiplyPointAffine(v);
+			Assert::AreEqual(a.x, b.x);
+			Assert::AreEqual(a.y, b.y);
+			Assert::AreEqual(a.z, b.z);
 		}
 	};
 }

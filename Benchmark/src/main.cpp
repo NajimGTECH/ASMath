@@ -1,434 +1,369 @@
-#define ANKERL_NANOBENCH_IMPLEMENT
-#include "nanobench.h"
+#include "Measure.h"
+#include "SystemInfo.h"
+#include "Workloads.h"
 
-#include "Data.h"
-#include "Validation.h"
-#include "Vector3Simd.h"
-#include "Mat4Simd.h"
-
-#include <chrono>
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
-#include <intrin.h>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <windows.h>
+/*
+ * Benchmark console application.
+ *
+ *   Benchmark.exe                       interactive menu (operation, version, batch size)
+ *   Benchmark.exe --list                list the operations and their versions
+ *   Benchmark.exe --op dot --version simd-aos --sizes 1000
+ *   Benchmark.exe --suite               full campaign: every operation, every version, default sizes,
+ *                                       raw results written to results/ (CSV)
+ *
+ * Options: --op <name>, --version <v1,v2|all>, --sizes <n1,n2>, --seed <n>, --samples <n>, --out <dir>
+ */
 
-namespace nb = ankerl::nanobench;
-using namespace math;
+using namespace bench;
 
 namespace
 {
-    // =====================================================================
-    // Options de la ligne de commande
-    // =====================================================================
     struct Options
     {
-        std::string test = "all";           // dot | normalize | transform | mat4 | convert | all
-        std::vector<std::size_t> sizes;     // vide = tailles par defaut
+        std::string operation;             // empty = all operations (suite)
+        std::vector<std::string> versions; // empty = all versions
+        std::vector<std::size_t> sizes;    // empty = default sizes of the operation
         std::uint32_t seed = 42;
-        bool validateOnly = false;
-        bool skipValidation = false;
-        std::string outDir = "results";
+        MeasureSettings settings;
+        std::string outDir;                // empty = no files written
+        bool suite = false;
     };
 
-    // Tailles par defaut : petite (non multiple de 4), moyenne (tient en cache L1/L2), grande (sort des caches).
-    const std::vector<std::size_t> kDefaultVecSizes = { 10, 1'000, 100'000, 4'000'000 };
-    const std::vector<std::size_t> kDefaultMatSizes = { 10, 1'000, 100'000, 1'000'000 }; // 64 octets/matrice
+    std::vector<std::string> SplitComma(const std::string& text)
+    {
+        std::vector<std::string> parts;
+        std::stringstream stream(text);
+        std::string part;
+        while (std::getline(stream, part, ','))
+            if (!part.empty())
+                parts.push_back(part);
+        return parts;
+    }
+
+    std::vector<std::size_t> ParseSizes(const std::string& text)
+    {
+        std::vector<std::size_t> sizes;
+        for (const std::string& part : SplitComma(text))
+            sizes.push_back(std::strtoull(part.c_str(), nullptr, 10));
+        return sizes;
+    }
 
     void PrintUsage()
     {
         std::printf(
-            "Usage : Benchmark.exe [options]\n"
-            "  --test <nom>      dot | normalize | transform | mat4 | convert | all (defaut : all)\n"
-            "  --sizes a,b,c     tailles de lots (defaut : 10,1000,100000,4000000 ; mat4 : 10,1000,100000,1000000)\n"
-            "  --seed <n>        graine des donnees aleatoires (defaut : 42)\n"
-            "  --validate        validation uniquement, sans mesures\n"
-            "  --no-validate     mesures sans validation prealable\n"
-            "  --out <dossier>   dossier des resultats bruts (defaut : results)\n");
+            "Usage:\n"
+            "  Benchmark.exe                      interactive menu\n"
+            "  Benchmark.exe --list               list operations and versions\n"
+            "  Benchmark.exe --suite              every operation and version, default sizes, CSV in results/\n"
+            "  Benchmark.exe --op <name> [--version <v1,v2|all>] [--sizes <n1,n2,...>]\n"
+            "Options:\n"
+            "  --seed <n>      seed of the random input data (default 42)\n"
+            "  --samples <n>   number of timed samples (default 31)\n"
+            "  --out <dir>     write the raw results (CSV) to this folder\n");
     }
 
-    Options ParseArgs(int argc, char** argv)
+    void PrintList()
     {
-        Options opt;
+        for (const Operation& op : AllOperations())
+        {
+            std::printf("%s : %s\n", op.name.c_str(), op.description.c_str());
+            for (const Variant& v : op.variants)
+                std::printf("    %-16s %s\n", v.name.c_str(), v.description.c_str());
+        }
+    }
+
+    bool ParseArgs(int argc, char** argv, Options& opt)
+    {
         for (int i = 1; i < argc; ++i)
         {
             const std::string arg = argv[i];
             const bool hasValue = i + 1 < argc;
-            if (arg == "--test" && hasValue)
-                opt.test = argv[++i];
+            if (arg == "--op" && hasValue)
+                opt.operation = argv[++i];
+            else if (arg == "--version" && hasValue)
+            {
+                const std::string value = argv[++i];
+                if (value != "all")
+                    opt.versions = SplitComma(value);
+            }
+            else if ((arg == "--sizes" || arg == "--size") && hasValue)
+                opt.sizes = ParseSizes(argv[++i]);
             else if (arg == "--seed" && hasValue)
                 opt.seed = static_cast<std::uint32_t>(std::strtoul(argv[++i], nullptr, 10));
+            else if (arg == "--samples" && hasValue)
+                opt.settings.samples = std::max(1, std::atoi(argv[++i]));
             else if (arg == "--out" && hasValue)
                 opt.outDir = argv[++i];
-            else if (arg == "--sizes" && hasValue)
+            else if (arg == "--suite")
+                opt.suite = true;
+            else if (arg == "--list")
             {
-                const std::string list = argv[++i];
-                std::size_t start = 0;
-                while (start < list.size())
-                {
-                    const std::size_t comma = list.find(',', start);
-                    const std::string item = list.substr(start, comma == std::string::npos ? std::string::npos : comma - start);
-                    const std::size_t n = std::strtoull(item.c_str(), nullptr, 10);
-                    if (n > 0)
-                        opt.sizes.push_back(n);
-                    else
-                        std::printf("Taille ignoree : '%s' (doit etre > 0 ; le lot vide est couvert par la validation)\n", item.c_str());
-                    if (comma == std::string::npos)
-                        break;
-                    start = comma + 1;
-                }
+                PrintList();
+                std::exit(0);
             }
-            else if (arg == "--validate")
-                opt.validateOnly = true;
-            else if (arg == "--no-validate")
-                opt.skipValidation = true;
             else
             {
                 PrintUsage();
-                std::exit(arg == "--help" || arg == "-h" ? 0 : 1);
+                return false;
             }
         }
-        return opt;
+        return true;
     }
 
-    // =====================================================================
-    // Informations machine / compilation (necessaires pour reproduire les mesures)
-    // =====================================================================
-    std::string CpuBrand()
+    // ====================================================================================
+    // Interactive menu (used when the program is started without arguments, e.g. from VS)
+    // ====================================================================================
+    void InteractiveMenu(Options& opt)
     {
-        int regs[4] = {};
-        __cpuid(regs, 0x80000000);
-        if (static_cast<unsigned>(regs[0]) < 0x80000004u)
-            return "inconnu";
-        char brand[49] = {};
-        for (int i = 0; i < 3; ++i)
+        const std::vector<Operation>& ops = AllOperations();
+        std::printf("\nOperations:\n");
+        for (std::size_t i = 0; i < ops.size(); ++i)
+            std::printf("  %zu. %-10s %s\n", i + 1, ops[i].name.c_str(), ops[i].description.c_str());
+        std::printf("  %zu. all (full campaign, results written to results/)\n", ops.size() + 1);
+        std::printf("Choice: ");
+        std::size_t choice = 0;
+        std::cin >> choice;
+        if (choice < 1 || choice > ops.size())
         {
-            __cpuid(regs, 0x80000002 + i);
-            std::memcpy(brand + 16 * i, regs, 16);
+            opt.suite = true;
+            opt.outDir = "results";
+            return;
         }
-        std::string s(brand);
-        s.erase(0, s.find_first_not_of(' '));
-        s.erase(s.find_last_not_of(' ') + 1);
-        return s;
-    }
+        const Operation& op = ops[choice - 1];
+        opt.operation = op.name;
 
-    std::string CpuFeatures()
-    {
-        int r0[4] = {}, r1[4] = {}, r7[4] = {};
-        __cpuid(r0, 0);
-        __cpuid(r1, 1);
-        if (r0[0] >= 7)
-            __cpuidex(r7, 7, 0);
+        std::printf("\nVersions of %s:\n", op.name.c_str());
+        for (std::size_t i = 0; i < op.variants.size(); ++i)
+            std::printf("  %zu. %-16s %s\n", i + 1, op.variants[i].name.c_str(), op.variants[i].description.c_str());
+        std::printf("  %zu. all\n", op.variants.size() + 1);
+        std::printf("Choice: ");
+        std::cin >> choice;
+        if (choice >= 1 && choice <= op.variants.size())
+            opt.versions = { op.variants[choice - 1].name };
 
-        std::string s;
-        auto add = [&](bool has, const char* name) { if (has) { s += name; s += ' '; } };
-        add(r1[3] & (1 << 25), "SSE");
-        add(r1[3] & (1 << 26), "SSE2");
-        add(r1[2] & (1 << 0), "SSE3");
-        add(r1[2] & (1 << 9), "SSSE3");
-        add(r1[2] & (1 << 19), "SSE4.1");
-        add(r1[2] & (1 << 20), "SSE4.2");
-        add(r1[2] & (1 << 28), "AVX");
-        add(r1[2] & (1 << 12), "FMA");
-        add(r7[1] & (1 << 5), "AVX2");
-        add(r7[1] & (1 << 16), "AVX-512F");
-        return s;
-    }
-
-    const char* ArchFlag()
-    {
-#if defined(__AVX512F__)
-        return "/arch:AVX512";
-#elif defined(__AVX2__)
-        return "/arch:AVX2";
-#elif defined(__AVX__)
-        return "/arch:AVX";
-#else
-        return "/arch:SSE2 (defaut x64, pas de FMA)";
-#endif
-    }
-
-    const char* FpModel()
-    {
-#if defined(_M_FP_FAST)
-        return "/fp:fast";
-#elif defined(_M_FP_STRICT)
-        return "/fp:strict";
-#elif defined(_M_FP_PRECISE)
-        return "/fp:precise";
-#else
-        return "inconnu";
-#endif
-    }
-
-    void PrintSystemInfo(const Options& opt)
-    {
-        std::printf("=== Banc de mesure ASM/SIMD : reference C++ vs SSE/SSE2 (nanobench) ===\n");
-        std::printf("  CPU            : %s\n", CpuBrand().c_str());
-        std::printf("  Jeux d'instr.  : %s\n", CpuFeatures().c_str());
-        std::printf("  Compilateur    : MSVC %d.%02d.%05d\n", _MSC_FULL_VER / 10000000, (_MSC_FULL_VER / 100000) % 100, _MSC_FULL_VER % 100000);
-#ifdef NDEBUG
-        std::printf("  Configuration  : Release x64, /O2, /GL + /LTCG, auto-vectorisation autorisee\n");
-#else
-        std::printf("  Configuration  : DEBUG -> mesures non representatives, utiliser Release x64 !\n");
-#endif
-        std::printf("  Options        : %s, %s (identiques pour MathsLib et Benchmark)\n", ArchFlag(), FpModel());
-        if (IsDebuggerPresent())
-            std::printf("  ATTENTION      : debogueur attache -> lancer sans debogueur (Ctrl+F5) pour des mesures fiables\n");
-
+        std::printf("\nBatch sizes, comma separated (0 = default sizes): ");
         std::string sizes;
-        for (std::size_t n : opt.sizes)
-            sizes += (sizes.empty() ? "" : ",") + std::to_string(n);
-        std::printf("  Relancer       : Benchmark.exe --test %s%s%s --seed %u\n",
-                    opt.test.c_str(), sizes.empty() ? "" : " --sizes ", sizes.c_str(), opt.seed);
+        std::cin >> sizes;
+        opt.sizes = ParseSizes(sizes);
+        if (opt.sizes.size() == 1 && opt.sizes[0] == 0)
+            opt.sizes.clear();
     }
 
-    // =====================================================================
-    // nanobench
-    // =====================================================================
-
-    /**
-     * Protocole commun a toutes les mesures :
-     *  - les donnees et buffers de sortie sont prepares AVANT bench.run (pas d'allocation chronometree) ;
-     *  - les sorties sont ecrites dans des tableaux separes : les entrees ne sont jamais modifiees,
-     *    il n'y a donc rien a reinitialiser entre deux iterations ;
-     *  - warmup : iterations non mesurees (caches, predicteur de branchement, montee en frequence) ;
-     *  - epochs : 21 mesures independantes -> nanobench donne la mediane et err% (MdAPE = ecart
-     *    median a la mediane, robuste aux valeurs aberrantes) ;
-     *  - minEpochTime : chaque mesure dure au moins 5 ms (petits lots : nanobench repete la boucle).
-     */
-    nb::Bench MakeBench(const std::string& title, std::size_t n)
+    // ====================================================================================
+    // Result check: every version is compared with the reference on the same input
+    // ====================================================================================
+    std::string CheckAgainstReference(const std::vector<float>& reference, const std::vector<float>& values, bool exact, bool& ok)
     {
-        nb::Bench b;
-        b.title(title + " (n = " + std::to_string(n) + ")")
-            .unit("elem")
-            .batch(n)               // temps affiche par element (ns/elem)
-            .relative(true)         // la 1re version (reference C++ AoS) vaut 100 %
-            .warmup(10)
-            .epochs(21)
-            .minEpochTime(std::chrono::milliseconds(5))
-            .performanceCounters(false); // compteurs materiels non disponibles sous Windows
-        return b;
+        double maxDiff = 0.0;
+        std::size_t different = 0;
+        for (std::size_t i = 0; i < values.size(); ++i)
+        {
+            if (values[i] != reference[i])
+            {
+                ++different;
+                maxDiff = std::max(maxDiff, std::fabs(static_cast<double>(values[i]) - reference[i]));
+            }
+        }
+
+        char text[96];
+        if (different == 0)
+            std::snprintf(text, sizeof(text), "identical");
+        else if (exact)
+        {
+            std::snprintf(text, sizeof(text), "MISMATCH (%zu values, max diff %.3g)", different, maxDiff);
+            ok = false;
+        }
+        else
+            std::snprintf(text, sizeof(text), "approx (max diff %.3g)", maxDiff);
+        return text;
     }
 
-    // Empeche le compilateur de supprimer le calcul : l'adresse du resultat "s'echappe" vers une
-    // fonction opaque de nanobench (compilee sans optimisation), donc les ecritures doivent avoir lieu.
-    template <typename T>
-    void Escape(std::vector<T>& v) { nb::doNotOptimizeAway(v.data()); }
-    void Escape(Vec3SoA& s) { Escape(s.x); Escape(s.y); Escape(s.z); }
-
-    struct Row
+    // ====================================================================================
+    // Running and printing
+    // ====================================================================================
+    struct CsvFiles
     {
-        std::string test;
-        std::size_t n;
-        std::string variant;
-        double nsPerElem;
-        double errPercent;
-        double speedup; // temps reference / temps version
+        std::ofstream summary;
+        std::ofstream samples;
     };
-    std::vector<Row> g_rows;
 
-    void Record(const std::string& test, std::size_t n, const nb::Bench& b, const std::string& outDir)
+    bool IsSelected(const Options& opt, const Variant& v)
     {
-        using M = nb::Result::Measure;
-        const auto& results = b.results();
-        const double base = results.front().median(M::elapsed); // secondes par iteration (= lot complet)
-        for (const auto& r : results)
+        if (opt.versions.empty())
+            return true;
+        for (const std::string& name : opt.versions)
+            if (name == v.name)
+                return true;
+        return false;
+    }
+
+    bool RunOperation(const Operation& op, const Options& opt, CsvFiles* csv)
+    {
+        bool ok = true;
+        const std::vector<std::size_t>& sizes = opt.sizes.empty() ? op.defaultSizes : opt.sizes;
+
+        for (std::size_t n : sizes)
         {
-            const double t = r.median(M::elapsed);
-            g_rows.push_back({ test, n, r.config().mBenchmarkName, t / static_cast<double>(n) * 1e9,
-                               r.medianAbsolutePercentError(M::elapsed) * 100.0, base / t });
+            Workspace w;
+            PrepareWorkspace(w, op, n, opt.seed);
+
+            std::printf("\n=== %s, n = %zu : %s ===\n", op.name.c_str(), n, op.description.c_str());
+            std::printf("%-16s %12s %10s %10s %7s %9s  %s\n", "version", "median", "q1", "q3", "IQR%", "speedup", "check");
+            std::printf("%-16s %12s %10s %10s %7s %9s\n", "", "(ns/elem)", "", "", "", "(ref/v)");
+
+            // The reference is always run (and measured) first: needed for the check and the ratio.
+            const Variant& refVariant = op.variants.front();
+            refVariant.run(w);
+            const std::vector<float> reference = ReadOutput(w, refVariant.output);
+            double referenceMedian = 0.0;
+
+            for (std::size_t v = 0; v < op.variants.size(); ++v)
+            {
+                const Variant& variant = op.variants[v];
+                const bool isReference = (v == 0);
+                if (!isReference && !IsSelected(opt, variant))
+                    continue;
+
+                // Check the result (one run, outside the timing)
+                variant.run(w);
+                const std::vector<float> values = ReadOutput(w, variant.output);
+                std::string check = "-";
+                if (op.hasReference && isReference)
+                    check = "reference";
+                else if (op.hasReference && variant.output != Output::None)
+                    check = CheckAgainstReference(reference, values, variant.exact, ok);
+
+                // Measure
+                const Measurement m = Measure(variant.run, w, opt.settings);
+                if (isReference)
+                    referenceMedian = m.median;
+                const double speedup = (op.hasReference && m.median > 0.0) ? referenceMedian / m.median : 0.0;
+
+                char speedupText[16] = "-";
+                if (op.hasReference)
+                    std::snprintf(speedupText, sizeof(speedupText), "%.2fx", speedup);
+                std::printf("%-16s %12.3f %10.3f %10.3f %6.1f%% %9s  %s\n", variant.name.c_str(), m.median, m.q1, m.q3,
+                            m.IqrPercent(), speedupText, check.c_str());
+
+                if (csv != nullptr)
+                {
+                    csv->summary << op.name << ',' << n << ',' << variant.name << ',' << m.median << ',' << m.q1 << ','
+                                 << m.q3 << ',' << m.min << ',' << m.max << ',' << m.IqrPercent() << ','
+                                 << (op.hasReference ? speedup : 0.0) << ',' << m.callsPerSample << ",\"" << check << "\","
+                                 << Checksum(values) << '\n';
+                    for (std::size_t s = 0; s < m.samples.size(); ++s)
+                        csv->samples << op.name << ',' << n << ',' << variant.name << ',' << s << ',' << m.samples[s] << '\n';
+                }
+            }
         }
-
-        // Resultats bruts : toutes les mesures (epochs) au format JSON.
-        std::ofstream json(outDir + "/" + test + "_n" + std::to_string(n) + ".json");
-        nb::render(nb::templates::json(), b, json);
+        return ok;
     }
 
-    void BenchDot(std::size_t n, std::uint32_t seed, const std::string& outDir)
+    std::string RerunCommand(const Options& opt)
     {
-        bench::Rng rng(seed);
-        const std::vector<Vec3f> a = bench::RandomVectors(n, rng);
-        const std::vector<Vec3f> c = bench::RandomVectors(n, rng);
-        std::vector<float> out(n);
-        Vec3SoA sa(n), sc(n), tmpA(n), tmpC(n);
-        ref::AoSToSoA(a.data(), sa, n);
-        ref::AoSToSoA(c.data(), sc, n);
-
-        nb::Bench b = MakeBench("Produit scalaire", n);
-        b.run("ref  AoS (C++)", [&] { ref::DotBatch(a.data(), c.data(), out.data(), n); Escape(out); });
-        b.run("simd AoS (SSE)", [&] { simd::DotBatch(a.data(), c.data(), out.data(), n); Escape(out); });
-        b.run("ref  SoA (C++)", [&] { ref::DotBatchSoA(sa, sc, out.data(), n); Escape(out); });
-        b.run("simd SoA (SSE)", [&] { simd::DotBatchSoA(sa, sc, out.data(), n); Escape(out); });
-        b.run("simd SoA + conversion AoS->SoA", [&] {
-            simd::AoSToSoA(a.data(), tmpA, n);
-            simd::AoSToSoA(c.data(), tmpC, n);
-            simd::DotBatchSoA(tmpA, tmpC, out.data(), n);
-            Escape(out);
-        });
-        Record("dot", n, b, outDir);
-    }
-
-    void BenchNormalize(std::size_t n, std::uint32_t seed, const std::string& outDir)
-    {
-        bench::Rng rng(seed);
-        const std::vector<Vec3f> in = bench::RandomVectors(n, rng);
-        std::vector<Vec3f> out(n);
-        Vec3SoA sin(n), sout(n), tmpIn(n), tmpOut(n);
-        ref::AoSToSoA(in.data(), sin, n);
-
-        nb::Bench b = MakeBench("Normalisation", n);
-        b.run("ref  AoS (C++)", [&] { ref::NormalizeBatch(in.data(), out.data(), n); Escape(out); });
-        b.run("simd AoS (SSE)", [&] { simd::NormalizeBatch(in.data(), out.data(), n); Escape(out); });
-        b.run("ref  SoA (C++)", [&] { ref::NormalizeBatchSoA(sin, sout, n); Escape(sout); });
-        b.run("simd SoA (SSE)", [&] { simd::NormalizeBatchSoA(sin, sout, n); Escape(sout); });
-        b.run("simd SoA + conversions AoS<->SoA", [&] {
-            simd::AoSToSoA(in.data(), tmpIn, n);
-            simd::NormalizeBatchSoA(tmpIn, tmpOut, n);
-            simd::SoAToAoS(tmpOut, out.data(), n);
-            Escape(out);
-        });
-        Record("normalize", n, b, outDir);
-    }
-
-    void BenchTransform(std::size_t n, std::uint32_t seed, const std::string& outDir)
-    {
-        bench::Rng rng(seed);
-        const Mat4f m = bench::RandomAffine(rng);
-        const std::vector<Vec3f> in = bench::RandomVectors(n, rng);
-        std::vector<Vec3f> out(n);
-        Vec3SoA sin(n), sout(n), tmpIn(n), tmpOut(n);
-        ref::AoSToSoA(in.data(), sin, n);
-
-        nb::Bench b = MakeBench("Transformation de points (Mat4 affine, w = 1)", n);
-        b.run("ref  AoS (C++)", [&] { ref::TransformPointsBatch(m, in.data(), out.data(), n); Escape(out); });
-        b.run("simd AoS 4 pts/iter (SSE)", [&] { simd::TransformPointsBatch(m, in.data(), out.data(), n); Escape(out); });
-        b.run("simd AoS 1 pt/iter (SSE)", [&] { simd::TransformPointsBatchPerPoint(m, in.data(), out.data(), n); Escape(out); });
-        b.run("ref  SoA (C++)", [&] { ref::TransformPointsBatchSoA(m, sin, sout, n); Escape(sout); });
-        b.run("simd SoA (SSE)", [&] { simd::TransformPointsBatchSoA(m, sin, sout, n); Escape(sout); });
-        b.run("simd SoA + conversions AoS<->SoA", [&] {
-            simd::AoSToSoA(in.data(), tmpIn, n);
-            simd::TransformPointsBatchSoA(m, tmpIn, tmpOut, n);
-            simd::SoAToAoS(tmpOut, out.data(), n);
-            Escape(out);
-        });
-        Record("transform", n, b, outDir);
-    }
-
-    void BenchMat4(std::size_t n, std::uint32_t seed, const std::string& outDir)
-    {
-        bench::Rng rng(seed);
-        const std::vector<Mat4f> a = bench::RandomMatrices(n, rng);
-        const std::vector<Mat4f> c = bench::RandomMatrices(n, rng);
-        std::vector<Mat4f> out(n);
-
-        nb::Bench b = MakeBench("Produit Mat4 x Mat4", n);
-        b.run("ref  operator* (C++)", [&] { ref::MultiplyBatch(a.data(), c.data(), out.data(), n); Escape(out); });
-        b.run("simd (SSE)", [&] { simd::MultiplyBatch(a.data(), c.data(), out.data(), n); Escape(out); });
-        Record("mat4", n, b, outDir);
-    }
-
-    // Les conversions AoS <-> SoA sont mesurees a part (exigence du cahier des charges).
-    void BenchConvert(std::size_t n, std::uint32_t seed, const std::string& outDir)
-    {
-        bench::Rng rng(seed);
-        const std::vector<Vec3f> in = bench::RandomVectors(n, rng);
-        std::vector<Vec3f> out(n);
-        Vec3SoA soa(n);
-        ref::AoSToSoA(in.data(), soa, n);
-
-        nb::Bench toSoA = MakeBench("Conversion AoS -> SoA", n);
-        toSoA.run("ref  AoS->SoA (C++)", [&] { ref::AoSToSoA(in.data(), soa, n); Escape(soa); });
-        toSoA.run("simd AoS->SoA (SSE)", [&] { simd::AoSToSoA(in.data(), soa, n); Escape(soa); });
-        Record("aos_to_soa", n, toSoA, outDir);
-
-        nb::Bench toAoS = MakeBench("Conversion SoA -> AoS", n);
-        toAoS.run("ref  SoA->AoS (C++)", [&] { ref::SoAToAoS(soa, out.data(), n); Escape(out); });
-        toAoS.run("simd SoA->AoS (SSE)", [&] { simd::SoAToAoS(soa, out.data(), n); Escape(out); });
-        Record("soa_to_aos", n, toAoS, outDir);
-    }
-
-    // =====================================================================
-    // Synthese
-    // =====================================================================
-    void PrintSummary()
-    {
-        std::printf("\n=== Synthese : mediane par element, err%% = MdAPE (dispersion), acceleration = temps ref / temps version ===\n");
-        std::printf("%-12s %10s  %-34s %12s %8s %14s\n", "traitement", "n", "version", "ns/elem", "err%", "acceleration");
-        std::string previous;
-        for (const Row& r : g_rows)
+        std::string cmd = "Benchmark.exe";
+        if (opt.suite)
+            cmd += " --suite";
+        if (!opt.operation.empty())
+            cmd += " --op " + opt.operation;
+        if (!opt.versions.empty())
         {
-            const std::string group = r.test + std::to_string(r.n);
-            if (!previous.empty() && group != previous)
-                std::printf("\n");
-            previous = group;
-            std::printf("%-12s %10zu  %-34s %12.3f %7.1f%% %13.2fx\n",
-                        r.test.c_str(), r.n, r.variant.c_str(), r.nsPerElem, r.errPercent, r.speedup);
+            cmd += " --version ";
+            for (std::size_t i = 0; i < opt.versions.size(); ++i)
+                cmd += (i ? "," : "") + opt.versions[i];
         }
-    }
-
-    void WriteSummaryCsv(const Options& opt)
-    {
-        const std::string path = opt.outDir + "/summary.csv";
-        std::ofstream csv(path);
-        csv << "test;n;version;ns_per_elem;err_percent;speedup_vs_ref;seed;cpu\n";
-        for (const Row& r : g_rows)
-            csv << r.test << ';' << r.n << ';' << r.variant << ';' << r.nsPerElem << ';' << r.errPercent << ';'
-                << r.speedup << ';' << opt.seed << ';' << CpuBrand() << '\n';
-        std::printf("\nResultats bruts : %s/*.json (toutes les mesures), synthese : %s\n", opt.outDir.c_str(), path.c_str());
+        if (!opt.sizes.empty())
+        {
+            cmd += " --sizes ";
+            for (std::size_t i = 0; i < opt.sizes.size(); ++i)
+                cmd += (i ? "," : "") + std::to_string(opt.sizes[i]);
+        }
+        cmd += " --seed " + std::to_string(opt.seed) + " --samples " + std::to_string(opt.settings.samples);
+        if (!opt.outDir.empty())
+            cmd += " --out " + opt.outDir;
+        return cmd;
     }
 }
 
 int main(int argc, char** argv)
 {
-    const Options opt = ParseArgs(argc, argv);
-    PrintSystemInfo(opt);
-
-    if (!opt.skipValidation && !bench::RunValidation(opt.seed))
-        return 1; // inutile de mesurer des versions fausses
-    if (opt.validateOnly)
-        return 0;
-
-    std::filesystem::create_directories(opt.outDir);
-
-    struct Test
-    {
-        const char* name;
-        void (*run)(std::size_t, std::uint32_t, const std::string&);
-        const std::vector<std::size_t>& defaultSizes;
-    };
-    const Test tests[] = {
-        { "dot", BenchDot, kDefaultVecSizes },
-        { "normalize", BenchNormalize, kDefaultVecSizes },
-        { "transform", BenchTransform, kDefaultVecSizes },
-        { "mat4", BenchMat4, kDefaultMatSizes },
-        { "convert", BenchConvert, kDefaultVecSizes },
-    };
-
-    bool found = false;
-    for (const Test& t : tests)
-    {
-        if (opt.test != "all" && opt.test != t.name)
-            continue;
-        found = true;
-        for (std::size_t n : (opt.sizes.empty() ? t.defaultSizes : opt.sizes))
-            t.run(n, opt.seed, opt.outDir);
-    }
-    if (!found)
-    {
-        std::printf("Traitement inconnu : %s\n", opt.test.c_str());
-        PrintUsage();
+    Options opt;
+    if (!ParseArgs(argc, argv, opt))
         return 1;
+
+    std::printf("=== ASM / SIMD math library benchmark: C++ reference vs SSE/SSE2 ===\n");
+    const std::string report = SystemReport();
+    std::printf("%s", report.c_str());
+
+    if (argc == 1)
+        InteractiveMenu(opt);
+    if (opt.suite && opt.outDir.empty())
+        opt.outDir = "results";
+
+    const std::string rerun = RerunCommand(opt);
+    std::printf("Seed %u, %d samples of >= %.1f ms after %.0f ms of warm-up per version\n", opt.seed,
+                opt.settings.samples, opt.settings.minSampleMs, opt.settings.warmupMs);
+    std::printf("Re-run with : %s\n", rerun.c_str());
+
+    // Which operations?
+    std::vector<const Operation*> selected;
+    if (opt.operation.empty())
+    {
+        for (const Operation& op : AllOperations())
+            selected.push_back(&op);
+    }
+    else
+    {
+        const Operation* op = FindOperation(opt.operation);
+        if (op == nullptr)
+        {
+            std::printf("Unknown operation '%s'. Use --list.\n", opt.operation.c_str());
+            return 1;
+        }
+        selected.push_back(op);
     }
 
-    PrintSummary();
-    WriteSummaryCsv(opt);
-    return 0;
+    // Raw results files
+    CsvFiles csv;
+    CsvFiles* csvPtr = nullptr;
+    if (!opt.outDir.empty())
+    {
+        std::filesystem::create_directories(opt.outDir);
+        csv.summary.open(opt.outDir + "/summary.csv");
+        csv.samples.open(opt.outDir + "/samples.csv");
+        csv.summary << "operation,n,version,median_ns,q1_ns,q3_ns,min_ns,max_ns,iqr_percent,speedup_vs_ref,calls_per_sample,check,checksum\n";
+        csv.samples << "operation,n,version,sample,ns_per_element\n";
+        std::ofstream info(opt.outDir + "/run_info.txt");
+        info << report << "Seed         : " << opt.seed << "\nSamples      : " << opt.settings.samples
+             << "\nRe-run with  : " << rerun << "\n";
+        csvPtr = &csv;
+    }
+
+    bool ok = true;
+    for (const Operation* op : selected)
+        ok = RunOperation(*op, opt, csvPtr) && ok;
+
+    if (csvPtr != nullptr)
+        std::printf("\nRaw results written to %s/ (summary.csv, samples.csv, run_info.txt)\n", opt.outDir.c_str());
+    if (!ok)
+        std::printf("\nERROR: at least one version gives a different result than the reference.\n");
+
+    if (argc == 1)
+    {
+        std::printf("\nPress Enter to quit...");
+        std::cin.ignore();
+        std::cin.get();
+    }
+    return ok ? 0 : 1;
 }

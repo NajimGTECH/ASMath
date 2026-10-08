@@ -1,0 +1,7 @@
+CPU          : AMD Ryzen 7 9800X3D 8-Core Processor
+Instructions : SSE SSE2 SSE3 SSSE3 SSE4.1 SSE4.2 AVX FMA AVX2 AVX-512F
+Compiler     : MSVC 19.38.33145, Release x64, /O2, default x64 instruction set (SSE2, no AVX, no FMA), /fp:precise, auto-vectorization allowed (default with /O2)
+Code used    : SSE/SSE2 intrinsics only (the AVX of the CPU is not used)
+Seed         : 42
+Samples      : 31
+Re-run with  : Benchmark.exe --suite --seed 42 --samples 31 --out results

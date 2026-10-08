@@ -136,13 +136,8 @@ namespace math
     template<typename T>
     void Vector3<T>::Normalize()
     {
-        T len = Length();
-        if (len > static_cast<T>(0))
-        {
-            x /= len;
-            y /= len;
-            z /= len;
-        }
+        // Same rule as Normalized(): a length that is not > 0 (zero or NaN) gives (0, 0, 0).
+        *this = Normalized();
     }
 
     // Distance and interpolation

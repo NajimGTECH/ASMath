@@ -13,6 +13,19 @@ namespace math
      * This class supports common operations for 3D transformations such as
      * translation, rotation, scaling, projection, and matrix inversion.
      *
+     * @par Conventions (used by every function of the library, scalar and SIMD)
+     * - **Storage**: row-major. `m[row][col]`, the 16 values are contiguous in memory
+     *   (`m[0][0], m[0][1], m[0][2], m[0][3], m[1][0], ...`). One row = 4 contiguous floats = 16 bytes.
+     * - **Vectors are row vectors**: a point is transformed with `p' = p * M`.
+     *   So `x' = x*m[0][0] + y*m[1][0] + z*m[2][0] + w*m[3][0]` (and the same for y', z', w').
+     * - **Rows 0, 1, 2** are the images of the X, Y and Z axes. **Row 3** holds the translation.
+     *   Column 3 is (0, 0, 0, 1) for an affine matrix.
+     * - **Composition order**: `A * B` applies A first, then B (`p * A * B = (p * A) * B`).
+     *   A classic object transform is therefore `Scale * Rotate * Translate`.
+     * - **Points** use w = 1 (translation applied), **directions** use w = 0 (translation ignored).
+     *
+     * This is the same convention as DirectX / DirectXMath (and the transpose of the OpenGL/GLM one).
+     *
      * @tparam T Numeric type (float, double, etc.)
      *
      * @example Mat4_Class_Examples.cpp
@@ -58,6 +71,9 @@ namespace math
 
         /**
          * @brief Builds a transformation matrix from translation, rotation, and scale.
+         *
+         * The result is `Scale(scale) * Rotate(rotation) * Translate(position)`:
+         * a point is first scaled, then rotated, then translated.
          * @param position Translation vector.
          * @param rotation Rotation quaternion.
          * @param scale Scaling vector.
@@ -68,7 +84,11 @@ namespace math
         static Mat4<T> TRS(const Vector3<T>& position, const Quaternion& rotation, const Vector3<T>& scale);
 
         /**
-         * @brief Builds a perspective projection matrix.
+         * @brief Builds a perspective projection matrix (right-handed, camera looks down -Z,
+         *        NDC depth in [-1, 1], OpenGL-style values stored for row vectors).
+         *
+         * A point at z = -nearZ is mapped to NDC depth -1, a point at z = -farZ to +1
+         * (after the perspective divide done by MultiplyPoint).
          * @param fovYRadians Field of view in radians.
          * @param aspect Aspect ratio.
          * @param nearZ Near clipping plane.
@@ -134,6 +154,9 @@ namespace math
 
         /**
          * @brief Multiplies this matrix by a 3D point (assuming w=1).
+         *
+         * Computes (x', y', z', w') = (x, y, z, 1) * M. If w' is neither 0 nor 1 the result is
+         * divided by w' (perspective divide). Use MultiplyPointAffine for the affine case.
          * @param v The input 3D point.
          * @return The transformed point.
          *
@@ -153,7 +176,9 @@ namespace math
         Vector3<T> MultiplyPointAffine(const Vector3<T>& v) const;
 
         /**
-         * @brief Multiplies this matrix by a direction vector (ignores translation).
+         * @brief Multiplies this matrix by a direction vector (w = 0, ignores translation).
+         *
+         * Same row-vector convention as MultiplyPoint: x' = x*m[0][0] + y*m[1][0] + z*m[2][0].
          * @param v The input 3D vector.
          * @return The transformed direction.
          *
@@ -169,6 +194,9 @@ namespace math
 
         /**
          * @brief Returns true if this matrix represents a valid TRS transform.
+         *
+         * Column 3 must be (0, 0, 0, 1) and the three axis rows must be orthogonal
+         * with a non-zero length (tolerance 1e-5).
          * @return True if valid TRS, false otherwise.
          */
         bool ValidTRS() const;
@@ -195,20 +223,22 @@ namespace math
 
         /**
          * @brief Extracts the scale component of the matrix.
+         *
+         * The scale on each axis is the length of the corresponding axis row (rows 0, 1, 2).
          * @return The extracted scale as a Vector3.
          */
         Vector3<T> ExtractScale() const;
 
         /**
          * @brief Returns a specific row of the matrix as a Vector3.
-         * @param index The row index (0–3).
+         * @param index The row index (0 to 3).
          * @return The row as a Vector3.
          */
         Vector3<T> GetRow(int index) const;
 
         /**
          * @brief Returns a specific column of the matrix as a Vector3.
-         * @param index The column index (0–3).
+         * @param index The column index (0 to 3).
          * @return The column as a Vector3.
          */
         Vector3<T> GetColumn(int index) const;

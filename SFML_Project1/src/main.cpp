@@ -67,8 +67,10 @@ int main()
     // =========================================================
 
     std::vector<math::Mat3<float>> matrices;
+    std::vector<math::Mat3<float>> matricesB;
 
     matrices.reserve(N);
+    matricesB.reserve(N);
 
     for (std::size_t i = 0; i < N; ++i)
     {
@@ -87,6 +89,20 @@ int main()
             value + 8.0f,
             value + 10.0f
         );
+
+        matricesB.emplace_back(
+            value + 11.0f,
+            value + 12.0f,
+            value + 13.0f,
+
+            value + 14.0f,
+            value + 15.0f,
+            value + 16.0f,
+
+            value + 17.0f,
+            value + 18.0f,
+            value + 20.0f
+        );
     }
 
     // =========================================================
@@ -94,8 +110,10 @@ int main()
     // =========================================================
 
     math::Mat3SSE::Mat3SoA matricesSoA;
+    math::Mat3SSE::Mat3SoA matricesBSoA;
 
     matricesSoA.Reserve(N);
+    matricesBSoA.Reserve(N);
 
     for (std::size_t i = 0; i < N; ++i)
     {
@@ -114,6 +132,20 @@ int main()
             value + 8.0f,
             value + 10.0f
         );
+
+        matricesBSoA.Add(
+            value + 11.0f,
+            value + 12.0f,
+            value + 13.0f,
+
+            value + 14.0f,
+            value + 15.0f,
+            value + 16.0f,
+
+            value + 17.0f,
+            value + 18.0f,
+            value + 20.0f
+        );
     }
 
     // =========================================================
@@ -125,6 +157,20 @@ int main()
 
     scaleResultSoA.Reserve(N);
     lerpResultSoA.Reserve(N);
+
+    // Mat3 transpose
+    std::vector<math::Mat3<float>> transposeResultAoS;
+    transposeResultAoS.resize(N);
+
+    math::Mat3SSE::Mat3SoA transposeResultSoA;
+    transposeResultSoA.Resize(N);
+
+    // Mat3 multiplication
+    std::vector<math::Mat3<float>> multiplyResultAoS;
+    multiplyResultAoS.resize(N);
+
+    math::Mat3SSE::Mat3SoA multiplyResultSoA;
+    multiplyResultSoA.Resize(N);
 
     // =========================================================
     // BENCHMARK
@@ -171,20 +217,14 @@ int main()
 
     bench.run("Vector2 SoA Classic Dot", [&]
         {
-            const float result =
-                [&]()
-                {
-                    float value = 0.0f;
+            float result = 0.0f;
 
-                    for (std::size_t i = 0; i < N; ++i)
-                    {
-                        value +=
-                            vectorsASoA.x[i] * vectorsBSoA.x[i] +
-                            vectorsASoA.y[i] * vectorsBSoA.y[i];
-                    }
-
-                    return value;
-                }();
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                result +=
+                    vectorsASoA.x[i] * vectorsBSoA.x[i] +
+                    vectorsASoA.y[i] * vectorsBSoA.y[i];
+            }
 
             ankerl::nanobench::doNotOptimizeAway(result);
         });
@@ -395,6 +435,126 @@ int main()
                 );
 
             ankerl::nanobench::doNotOptimizeAway(result);
+        });
+
+    // =========================================================
+    // MAT3 - TRANSPOSE
+    // =========================================================
+
+    bench.run("Mat3 AoS Classic Transpose", [&]
+        {
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                transposeResultAoS[i] =
+                    math::Mat3SSE::Transpose(
+                        matrices[i]
+                    );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(
+                transposeResultAoS.data()
+            );
+        });
+
+    bench.run("Mat3 AoS SIMD Transpose", [&]
+        {
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                transposeResultAoS[i] =
+                    math::Mat3SSE::TransposeSIMD(
+                        matrices[i]
+                    );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(
+                transposeResultAoS.data()
+            );
+        });
+
+    bench.run("Mat3 SoA Classic Transpose", [&]
+        {
+            math::Mat3SSE::TransposeSoA(
+                matricesSoA,
+                transposeResultSoA
+            );
+
+            ankerl::nanobench::doNotOptimizeAway(
+                transposeResultSoA.m00.data()
+            );
+        });
+
+    bench.run("Mat3 SoA SIMD Transpose", [&]
+        {
+            math::Mat3SSE::TransposeSoASIMD(
+                matricesSoA,
+                transposeResultSoA
+            );
+
+            ankerl::nanobench::doNotOptimizeAway(
+                transposeResultSoA.m00.data()
+            );
+        });
+
+    // =========================================================
+    // MAT3 - MULTIPLICATION
+    // =========================================================
+
+    bench.run("Mat3 AoS Classic Multiply", [&]
+        {
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                multiplyResultAoS[i] =
+                    math::Mat3SSE::Multiply(
+                        matrices[i],
+                        matricesB[i]
+                    );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(
+                multiplyResultAoS.data()
+            );
+        });
+
+    bench.run("Mat3 AoS SIMD Multiply", [&]
+        {
+            for (std::size_t i = 0; i < N; ++i)
+            {
+                multiplyResultAoS[i] =
+                    math::Mat3SSE::MultiplySIMD(
+                        matrices[i],
+                        matricesB[i]
+                    );
+            }
+
+            ankerl::nanobench::doNotOptimizeAway(
+                multiplyResultAoS.data()
+            );
+        });
+
+    bench.run("Mat3 SoA Classic Multiply", [&]
+        {
+            math::Mat3SSE::MultiplySoA(
+                matricesSoA,
+                matricesBSoA,
+                multiplyResultSoA
+            );
+
+            ankerl::nanobench::doNotOptimizeAway(
+                multiplyResultSoA.m00.data()
+            );
+        });
+
+    bench.run("Mat3 SoA SIMD Multiply", [&]
+        {
+            math::Mat3SSE::MultiplySoASIMD(
+                matricesSoA,
+                matricesBSoA,
+                multiplyResultSoA
+            );
+
+            ankerl::nanobench::doNotOptimizeAway(
+                multiplyResultSoA.m00.data()
+            );
         });
 
     return 0;

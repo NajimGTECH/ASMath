@@ -62,6 +62,130 @@ namespace bench
         void MatMulRef(Workspace& w) { ref::MultiplyBatch(w.matA.data(), w.matB.data(), w.outMatrices.data(), w.n); }
         void MatMulSimd(Workspace& w) { simd::MultiplyBatch(w.matA.data(), w.matB.data(), w.outMatrices.data(), w.n); }
 
+        // ---- Vector2 (same functions as the benchmarks of the Game project) ----
+        constexpr float kLerpT = 0.5f;
+
+        void Vec2DotRefAoS(Workspace& w)
+        {
+            float result = 0.0f;
+            for (std::size_t i = 0; i < w.n; ++i)
+                result += w.v2A[i].Dot(w.v2B[i]);
+            w.outScalar = result;
+        }
+        void Vec2DotSimdAoS(Workspace& w)
+        {
+            float result = 0.0f;
+            for (std::size_t i = 0; i < w.n; ++i)
+                result += Vector2SSE::Dot(w.v2A[i], w.v2B[i]);
+            w.outScalar = result;
+        }
+        void Vec2DotRefSoA(Workspace& w)
+        {
+            float result = 0.0f;
+            for (std::size_t i = 0; i < w.n; ++i)
+                result += w.v2SoaA.x[i] * w.v2SoaB.x[i] + w.v2SoaA.y[i] * w.v2SoaB.y[i];
+            w.outScalar = result;
+        }
+        void Vec2DotSimdSoA(Workspace& w) { w.outScalar = Vector2SSE::DotSoA(w.v2SoaA, w.v2SoaB); }
+
+        void Vec2ScaleRefAoS(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+                w.outV2[i] = Vec2f::Scale(w.v2A[i], w.v2B[i]);
+        }
+        void Vec2ScaleSimdAoS(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+                w.outV2[i] = Vector2SSE::Scale(w.v2A[i], w.v2B[i]);
+        }
+        void Vec2ScaleRefSoA(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+            {
+                w.outV2SoA.x[i] = w.v2SoaA.x[i] * w.v2SoaB.x[i];
+                w.outV2SoA.y[i] = w.v2SoaA.y[i] * w.v2SoaB.y[i];
+            }
+        }
+        void Vec2ScaleSimdSoA(Workspace& w) { Vector2SSE::ScaleSoA(w.v2SoaA, w.v2SoaB, w.outV2SoA); }
+
+        void Vec2LerpRefAoS(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+                w.outV2[i] = Vec2f::Lerp(w.v2A[i], w.v2B[i], kLerpT);
+        }
+        void Vec2LerpSimdAoS(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+                w.outV2[i] = Vector2SSE::Lerp(w.v2A[i], w.v2B[i], kLerpT);
+        }
+        void Vec2LerpRefSoA(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+            {
+                w.outV2SoA.x[i] = w.v2SoaA.x[i] + (w.v2SoaB.x[i] - w.v2SoaA.x[i]) * kLerpT;
+                w.outV2SoA.y[i] = w.v2SoaA.y[i] + (w.v2SoaB.y[i] - w.v2SoaA.y[i]) * kLerpT;
+            }
+        }
+        void Vec2LerpSimdSoA(Workspace& w) { Vector2SSE::LerpSoA(w.v2SoaA, w.v2SoaB, kLerpT, w.outV2SoA); }
+
+        // ---- Mat3 (same functions as the benchmarks of the Game project) ----
+        void Mat3DetRefAoS(Workspace& w)
+        {
+            float result = 0.0f;
+            for (std::size_t i = 0; i < w.n; ++i)
+                result += w.m3A[i].Determinant();
+            w.outScalar = result;
+        }
+        void Mat3DetSimdAoS(Workspace& w)
+        {
+            float result = 0.0f;
+            for (std::size_t i = 0; i < w.n; ++i)
+                result += Mat3SSE::Determinant(w.m3A[i]);
+            w.outScalar = result;
+        }
+        void Mat3DetRefSoA(Workspace& w) { w.outScalar = Mat3SSE::DeterminantSoA(w.m3SoaA); }
+        void Mat3DetSimdSoA(Workspace& w) { w.outScalar = Mat3SSE::DeterminantSoASIMD(w.m3SoaA); }
+
+        void Mat3TransRefAoS(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+                w.outM3[i] = Mat3SSE::Transpose(w.m3A[i]);
+        }
+        void Mat3TransSimdAoS(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+                w.outM3[i] = Mat3SSE::TransposeSIMD(w.m3A[i]);
+        }
+        void Mat3TransRefSoA(Workspace& w) { Mat3SSE::TransposeSoA(w.m3SoaA, w.outM3SoA); }
+        void Mat3TransSimdSoA(Workspace& w) { Mat3SSE::TransposeSoASIMD(w.m3SoaA, w.outM3SoA); }
+
+        void Mat3MulRefAoS(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+                w.outM3[i] = Mat3SSE::Multiply(w.m3A[i], w.m3B[i]);
+        }
+        void Mat3MulSimdAoS(Workspace& w)
+        {
+            for (std::size_t i = 0; i < w.n; ++i)
+                w.outM3[i] = Mat3SSE::MultiplySIMD(w.m3A[i], w.m3B[i]);
+        }
+        void Mat3MulRefSoA(Workspace& w) { Mat3SSE::MultiplySoA(w.m3SoaA, w.m3SoaB, w.outM3SoA); }
+        void Mat3MulSimdSoA(Workspace& w) { Mat3SSE::MultiplySoASIMD(w.m3SoaA, w.m3SoaB, w.outM3SoA); }
+
+        // ---- layout conversions of the Vector2 / Mat3 inputs (preparation only, never measured) ----
+        void ToSoA(const std::vector<Vec2f>& in, Vector2SSE::Vector2SoA& out)
+        {
+            out.Reserve(in.size());
+            for (const Vec2f& v : in)
+                out.Add(v.x, v.y);
+        }
+        void ToSoA(const std::vector<Mat3f>& in, Mat3SSE::Mat3SoA& out)
+        {
+            out.Reserve(in.size());
+            for (const Mat3f& m : in)
+                out.Add(m.m[0][0], m.m[0][1], m.m[0][2], m.m[1][0], m.m[1][1], m.m[1][2], m.m[2][0], m.m[2][1], m.m[2][2]);
+        }
+
         // Small = 10 (not a multiple of 4: tests the remainder), medium = 1000 (fits in L1/L2 cache),
         // large = 100 000 (L2/L3), very large = 4 000 000 (48 MB per AoS array: does not fit in most caches).
         const std::vector<std::size_t> kVectorSizes = { 10, 1'000, 100'000, 4'000'000 };
@@ -113,6 +237,55 @@ namespace bench
                   { "simd", "SSE, one row of the result per register", MatMulSimd, Output::Matrices, true },
               },
               kMatrixSizes, true },
+            { "vec2dot", "Sum of the dot products between two arrays of Vector2",
+              {
+                  { "ref-aos", "C++ reference, AoS (Vector2::Dot in a loop)", Vec2DotRefAoS, Output::Scalar, true },
+                  { "simd-aos", "SSE, AoS, 1 dot product per call (Vector2SSE::Dot)", Vec2DotSimdAoS, Output::Scalar, true },
+                  { "ref-soa", "C++ reference, SoA", Vec2DotRefSoA, Output::Scalar, true },
+                  { "simd-soa", "SSE, SoA (Vector2SSE::DotSoA)", Vec2DotSimdSoA, Output::Scalar, true },
+              },
+              kVectorSizes, true },
+            { "vec2scale", "Component-wise products of two arrays of Vector2",
+              {
+                  { "ref-aos", "C++ reference, AoS (Vector2::Scale in a loop)", Vec2ScaleRefAoS, Output::Vectors2, true },
+                  { "simd-aos", "SSE, AoS, 1 vector per call (Vector2SSE::Scale)", Vec2ScaleSimdAoS, Output::Vectors2, true },
+                  { "ref-soa", "C++ reference, SoA", Vec2ScaleRefSoA, Output::Vectors2SoA, true },
+                  { "simd-soa", "SSE, SoA (Vector2SSE::ScaleSoA)", Vec2ScaleSimdSoA, Output::Vectors2SoA, true },
+              },
+              kVectorSizes, true },
+            { "vec2lerp", "Linear interpolations (t = 0.5) between two arrays of Vector2",
+              {
+                  { "ref-aos", "C++ reference, AoS (Vector2::Lerp in a loop)", Vec2LerpRefAoS, Output::Vectors2, true },
+                  { "simd-aos", "SSE, AoS, 1 vector per call (Vector2SSE::Lerp)", Vec2LerpSimdAoS, Output::Vectors2, true },
+                  { "ref-soa", "C++ reference, SoA", Vec2LerpRefSoA, Output::Vectors2SoA, true },
+                  { "simd-soa", "SSE, SoA (Vector2SSE::LerpSoA)", Vec2LerpSimdSoA, Output::Vectors2SoA, true },
+              },
+              kVectorSizes, true },
+            { "mat3det", "Sum of the determinants of an array of Mat3",
+              {
+                  { "ref-aos", "C++ reference, AoS (Mat3::Determinant in a loop)", Mat3DetRefAoS, Output::Scalar, true },
+                  { "simd-aos", "AoS, Mat3SSE::Determinant in a loop", Mat3DetSimdAoS, Output::Scalar, true },
+                  { "ref-soa", "C++ reference, SoA (Mat3SSE::DeterminantSoA)", Mat3DetRefSoA, Output::Scalar, true },
+                  // The 4 determinants of a register are added together before the running sum: other rounding.
+                  { "simd-soa", "SSE, SoA (Mat3SSE::DeterminantSoASIMD)", Mat3DetSimdSoA, Output::Scalar, false },
+              },
+              kMatrixSizes, true },
+            { "mat3transpose", "Transposition of an array of Mat3",
+              {
+                  { "ref-aos", "C++ reference, AoS (Mat3SSE::Transpose in a loop)", Mat3TransRefAoS, Output::Matrices3, true },
+                  { "simd-aos", "SSE, AoS, _MM_TRANSPOSE4_PS (Mat3SSE::TransposeSIMD)", Mat3TransSimdAoS, Output::Matrices3, true },
+                  { "ref-soa", "C++ reference, SoA (Mat3SSE::TransposeSoA)", Mat3TransRefSoA, Output::Matrices3SoA, true },
+                  { "simd-soa", "SSE, SoA (Mat3SSE::TransposeSoASIMD)", Mat3TransSimdSoA, Output::Matrices3SoA, true },
+              },
+              kMatrixSizes, true },
+            { "mat3mul", "Products of two arrays of Mat3",
+              {
+                  { "ref-aos", "C++ reference, AoS (Mat3SSE::Multiply in a loop)", Mat3MulRefAoS, Output::Matrices3, true },
+                  { "simd-aos", "SSE, AoS, one dot product per coefficient (Mat3SSE::MultiplySIMD)", Mat3MulSimdAoS, Output::Matrices3, true },
+                  { "ref-soa", "C++ reference, SoA (Mat3SSE::MultiplySoA)", Mat3MulRefSoA, Output::Matrices3SoA, true },
+                  { "simd-soa", "SSE, SoA (Mat3SSE::MultiplySoASIMD)", Mat3MulSimdSoA, Output::Matrices3SoA, true },
+              },
+              kMatrixSizes, true },
         };
         return operations;
     }
@@ -136,6 +309,29 @@ namespace bench
             w.matA = RandomMatrices(n, rng);
             w.matB = RandomMatrices(n, rng);
             w.outMatrices.resize(n);
+            return;
+        }
+
+        if (op.name.rfind("vec2", 0) == 0)
+        {
+            w.v2A = RandomVectors2(n, rng);
+            w.v2B = RandomVectors2(n, rng);
+            ToSoA(w.v2A, w.v2SoaA);
+            ToSoA(w.v2B, w.v2SoaB);
+            w.outV2.resize(n);
+            w.outV2SoA.x.resize(n);
+            w.outV2SoA.y.resize(n);
+            return;
+        }
+
+        if (op.name.rfind("mat3", 0) == 0)
+        {
+            w.m3A = RandomMatrices3(n, rng);
+            w.m3B = RandomMatrices3(n, rng);
+            ToSoA(w.m3A, w.m3SoaA);
+            ToSoA(w.m3B, w.m3SoaB);
+            w.outM3.resize(n);
+            w.outM3SoA.Resize(n);
             return;
         }
 
@@ -184,6 +380,37 @@ namespace bench
                     for (int c = 0; c < 4; ++c)
                         values.push_back(m.m[r][c]);
             break;
+        case Output::Scalar:
+            values.push_back(w.outScalar);
+            break;
+        case Output::Vectors2:
+            for (const Vec2f& v : w.outV2)
+            {
+                values.push_back(v.x);
+                values.push_back(v.y);
+            }
+            break;
+        case Output::Vectors2SoA:
+            for (std::size_t i = 0; i < w.n; ++i)
+            {
+                values.push_back(w.outV2SoA.x[i]);
+                values.push_back(w.outV2SoA.y[i]);
+            }
+            break;
+        case Output::Matrices3:
+            for (const Mat3f& m : w.outM3)
+                for (int r = 0; r < 3; ++r)
+                    for (int c = 0; c < 3; ++c)
+                        values.push_back(m.m[r][c]);
+            break;
+        case Output::Matrices3SoA:
+        {
+            const math::Mat3SSE::Mat3SoA& s = w.outM3SoA;
+            for (std::size_t i = 0; i < w.n; ++i)
+                for (const std::vector<float>* e : { &s.m00, &s.m01, &s.m02, &s.m10, &s.m11, &s.m12, &s.m20, &s.m21, &s.m22 })
+                    values.push_back((*e)[i]);
+            break;
+        }
         case Output::None:
             break;
         }

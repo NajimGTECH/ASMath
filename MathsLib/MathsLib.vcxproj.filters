@@ -61,6 +61,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Quaternion.h" />
+    <ClInclude Include="include\Vector2.h" />
+    <ClInclude Include="include\Vector3.h" />
+    <ClInclude Include="include\Mat3.h" />
+    <ClInclude Include="include\Mat4.h" />
+    <ClInclude Include="Vector2SSE.h" />
+    <ClInclude Include="Mat3SSE.h" />
     <MASM Include="src\asm\Dot3.asm">
       <Filter>src\asm</Filter>
     </MASM>

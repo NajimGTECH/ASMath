@@ -6,6 +6,8 @@
 #include "Vector3Batch.h"
 #include "Mat4Batch.h"
 #include "Quaternion.h"
+#include "Vector2.h"
+#include "Mat3.h"
 
 /**
  * @file Data.h
@@ -70,6 +72,30 @@ namespace bench
         for (math::Mat4f& mat : v)
             for (int r = 0; r < 4; ++r)
                 for (int c = 0; c < 4; ++c)
+                    mat.m[r][c] = rng.Uniform(-2.0f, 2.0f);
+        return v;
+    }
+
+    /** n 2D vectors with components uniform in [-range, range). */
+    inline std::vector<math::Vector2<float>> RandomVectors2(std::size_t n, Rng& rng, float range = 100.0f)
+    {
+        std::vector<math::Vector2<float>> v(n);
+        for (math::Vector2<float>& e : v)
+        {
+            const float x = rng.Uniform(-range, range);
+            const float y = rng.Uniform(-range, range);
+            e = math::Vector2<float>(x, y);
+        }
+        return v;
+    }
+
+    /** n general 3x3 matrices (9 coefficients in [-2, 2)). */
+    inline std::vector<math::Mat3<float>> RandomMatrices3(std::size_t n, Rng& rng)
+    {
+        std::vector<math::Mat3<float>> v(n);
+        for (math::Mat3<float>& mat : v)
+            for (int r = 0; r < 3; ++r)
+                for (int c = 0; c < 3; ++c)
                     mat.m[r][c] = rng.Uniform(-2.0f, 2.0f);
         return v;
     }

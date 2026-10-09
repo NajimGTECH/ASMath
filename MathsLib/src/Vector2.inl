@@ -1,156 +1,337 @@
+
 namespace math
 {
-    // Constructeurs
-    template<typename T>
-    constexpr Vector2<T>::Vector2() : x(0), y(0) {}
+    // ======================
+    // Constructors
+    // ======================
 
     template<typename T>
-    constexpr Vector2<T>::Vector2(T x_, T y_) : x(x_), y(y_) {}
+    constexpr Vector2<T>::Vector2()
+        : x(static_cast<T>(0)),
+        y(static_cast<T>(0))
+    {
+    }
+
+    template<typename T>
+    constexpr Vector2<T>::Vector2(T x_, T y_)
+        : x(x_),
+        y(y_)
+    {
+    }
 
     template<typename T>
     template<typename U>
     constexpr Vector2<T>::Vector2(const Vector2<U>& other)
-        : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)) {
-    }
-
-    // Opérateurs arithmétiques
-    template<typename T>
-    constexpr Vector2<T> Vector2<T>::operator+(const Vector2& rhs) const { return { x + rhs.x, y + rhs.y }; }
-
-    template<typename T>
-    constexpr Vector2<T> Vector2<T>::operator-(const Vector2& rhs) const { return { x - rhs.x, y - rhs.y }; }
-
-    template<typename T>
-    constexpr Vector2<T>& Vector2<T>::operator+=(const Vector2& rhs) { x += rhs.x; y += rhs.y; return *this; }
-
-    template<typename T>
-    constexpr Vector2<T>& Vector2<T>::operator-=(const Vector2& rhs) { x -= rhs.x; y -= rhs.y; return *this; }
-
-    template<typename T>
-    constexpr Vector2<T> Vector2<T>::operator*(T scalar) const { return { x * scalar, y * scalar }; }
-
-    template<typename T>
-    constexpr Vector2<T> Vector2<T>::operator/(T scalar) const { return { x / scalar, y / scalar }; }
-
-    template<typename T>
-    constexpr Vector2<T>& Vector2<T>::operator*=(T scalar) { x *= scalar; y *= scalar; return *this; }
-
-    template<typename T>
-    constexpr Vector2<T>& Vector2<T>::operator/=(T scalar) { x /= scalar; y /= scalar; return *this; }
-
-    // Comparaison
-    template<typename T>
-    constexpr bool Vector2<T>::Equals(const Vector2& rhs, T epsilon) const
+        : x(static_cast<T>(other.x)),
+        y(static_cast<T>(other.y))
     {
-        return std::fabs(x - rhs.x) < epsilon && std::fabs(y - rhs.y) < epsilon;
+    }
+
+
+    // ======================
+    // Arithmetic Operators
+    // ======================
+
+    template<typename T>
+    constexpr Vector2<T> Vector2<T>::operator+(const Vector2& rhs) const
+    {
+        return { x + rhs.x, y + rhs.y };
     }
 
     template<typename T>
-    constexpr bool Vector2<T>::operator==(const Vector2& rhs) const { return x == rhs.x && y == rhs.y; }
+    constexpr Vector2<T> Vector2<T>::operator-(const Vector2& rhs) const
+    {
+        return { x - rhs.x, y - rhs.y };
+    }
 
     template<typename T>
-    constexpr bool Vector2<T>::operator!=(const Vector2& rhs) const { return !(*this == rhs); }
+    constexpr Vector2<T>& Vector2<T>::operator+=(const Vector2& rhs)
+    {
+        x += rhs.x;
+        y += rhs.y;
 
-    // Produit scalaire
-    template<typename T>
-    constexpr T Vector2<T>::Dot(const Vector2& rhs) const { return x * rhs.x + y * rhs.y; }
-
-    // Longueur et normalisation
-    template<typename T>
-    T Vector2<T>::Length() const { return std::sqrt(x * x + y * y); }
+        return *this;
+    }
 
     template<typename T>
-    T Vector2<T>::LengthSquared() const { return x * x + y * y; }
+    constexpr Vector2<T>& Vector2<T>::operator-=(const Vector2& rhs)
+    {
+        x -= rhs.x;
+        y -= rhs.y;
+
+        return *this;
+    }
+
+    template<typename T>
+    constexpr Vector2<T> Vector2<T>::operator*(T scalar) const
+    {
+        return { x * scalar, y * scalar };
+    }
+
+    template<typename T>
+    Vector2<T> Vector2<T>::operator/(T scalar) const
+    {
+        if (scalar == static_cast<T>(0))
+        {
+            throw std::domain_error("Vector2 division by zero");
+        }
+
+        return { x / scalar, y / scalar };
+    }
+
+    template<typename T>
+    constexpr Vector2<T>& Vector2<T>::operator*=(T scalar)
+    {
+        x *= scalar;
+        y *= scalar;
+
+        return *this;
+    }
+
+    template<typename T>
+    Vector2<T>& Vector2<T>::operator/=(T scalar)
+    {
+        if (scalar == static_cast<T>(0))
+        {
+            throw std::domain_error("Vector2 division by zero");
+        }
+
+        x /= scalar;
+        y /= scalar;
+
+        return *this;
+    }
+
+
+    // ======================
+    // Comparison
+    // ======================
+
+    template<typename T>
+    bool Vector2<T>::Equals(
+        const Vector2& rhs,
+        T absoluteTolerance,
+        T relativeTolerance
+    ) const
+    {
+        if (absoluteTolerance < static_cast<T>(0) ||
+            relativeTolerance < static_cast<T>(0))
+        {
+            throw std::invalid_argument("Tolerance cannot be negative");
+        }
+
+        const auto IsClose = [&](T a, T b)
+            {
+                const T difference = std::fabs(a - b);
+
+                const T scale = std::max(
+                    std::fabs(a),
+                    std::fabs(b)
+                );
+
+                return difference <=
+                    absoluteTolerance + relativeTolerance * scale;
+            };
+
+        return IsClose(x, rhs.x) && IsClose(y, rhs.y);
+    }
+
+    template<typename T>
+    constexpr bool Vector2<T>::operator==(const Vector2& rhs) const
+    {
+        return x == rhs.x && y == rhs.y;
+    }
+
+    template<typename T>
+    constexpr bool Vector2<T>::operator!=(const Vector2& rhs) const
+    {
+        return !(*this == rhs);
+    }
+
+
+    // ======================
+    // Vector Math
+    // ======================
+
+    template<typename T>
+    constexpr T Vector2<T>::Dot(const Vector2& rhs) const
+    {
+        return x * rhs.x + y * rhs.y;
+    }
+
+    template<typename T>
+    T Vector2<T>::Length() const
+    {
+        return static_cast<T>(std::hypot(x, y));
+    }
+
+    template<typename T>
+    constexpr T Vector2<T>::LengthSquared() const
+    {
+        return x * x + y * y;
+    }
 
     template<typename T>
     Vector2<T> Vector2<T>::Normalized() const
     {
-        T len = Length();
-        if (len == 0) return { 0, 0 };
-        return { x / len, y / len };
+        const T length = Length();
+
+        if (length == static_cast<T>(0))
+        {
+            return { static_cast<T>(0), static_cast<T>(0) };
+        }
+
+        return *this / length;
     }
 
     template<typename T>
     void Vector2<T>::Normalize()
     {
-        T len = Length();
-        if (len != 0) { x /= len; y /= len; }
+        const T length = Length();
+
+        if (length == static_cast<T>(0))
+        {
+            return;
+        }
+
+        x /= length;
+        y /= length;
     }
 
-    // Distance et interpolation
+
+    // ======================
+    // Distance and Interpolation
+    // ======================
+
     template<typename T>
     T Vector2<T>::Distance(const Vector2& a, const Vector2& b)
     {
-        return (a - b).length();
+        return (a - b).Length();
     }
 
     template<typename T>
-    Vector2<T> Vector2<T>::Lerp(const Vector2& a, const Vector2& b, T t)
+    Vector2<T> Vector2<T>::Lerp(
+        const Vector2& a,
+        const Vector2& b,
+        T t
+    )
     {
         return a + (b - a) * t;
     }
 
+
+    // ======================
+    // Angle
+    // ======================
+
     template<typename T>
     T Vector2<T>::Angle(const Vector2& a, const Vector2& b)
     {
-        T dot = a.Dot(b);
-        T magnitudeProduct = a.Length() * b.Length();
+        const T magnitudeProduct = a.Length() * b.Length();
 
-        // Avoid division by zero
         if (magnitudeProduct == static_cast<T>(0))
+        {
             return static_cast<T>(0);
+        }
 
-        T cosTheta = dot / magnitudeProduct;
+        T cosine = a.Dot(b) / magnitudeProduct;
 
-        // Clamp the value to avoid domain errors with acos()
-        if (cosTheta > static_cast<T>(1))
-            cosTheta = static_cast<T>(1);
-        else if (cosTheta < static_cast<T>(-1))
-            cosTheta = static_cast<T>(-1);
+        cosine = Clamp(
+            cosine,
+            static_cast<T>(-1),
+            static_cast<T>(1)
+        );
 
-        return std::acos(cosTheta) * static_cast<T>(180.0 / std::numbers::pi_v<float>);
+        const T radians = static_cast<T>(std::acos(cosine));
+
+        return radians * static_cast<T>(
+            180.0 / std::numbers::pi_v<double>
+            );
     }
+
+
+    // ======================
+    // Geometric Operations
+    // ======================
 
     template<typename T>
     Vector2<T> Vector2<T>::Perpendicular() const
     {
-        // Returns a vector rotated 90 degrees counter-clockwise
-        return Vector2<T>(-y, x);
+        return { -y, x };
     }
 
     template<typename T>
-    Vector2<T> Vector2<T>::Scale(const Vector2& a, const Vector2& b)
+    Vector2<T> Vector2<T>::Scale(
+        const Vector2& a,
+        const Vector2& b
+    )
     {
-        return Vector2<T>(a.x * b.x, a.y * b.y);
+        return { a.x * b.x, a.y * b.y };
     }
 
     template<typename T>
-    Vector2<T> Vector2<T>::Min(const Vector2& a, const Vector2& b)
+    Vector2<T> Vector2<T>::Min(
+        const Vector2& a,
+        const Vector2& b
+    )
     {
-        return Vector2<T>(
-            (a.x < b.x) ? a.x : b.x,
-            (a.y < b.y) ? a.y : b.y
-        );
+        return {
+            std::min(a.x, b.x),
+            std::min(a.y, b.y)
+        };
     }
 
     template<typename T>
-    Vector2<T> Vector2<T>::Max(const Vector2& a, const Vector2& b)
+    Vector2<T> Vector2<T>::Max(
+        const Vector2& a,
+        const Vector2& b
+    )
     {
-        return Vector2<T>(
-            (a.x > b.x) ? a.x : b.x,
-            (a.y > b.y) ? a.y : b.y
-        );
+        return {
+            std::max(a.x, b.x),
+            std::max(a.y, b.y)
+        };
     }
 
-    template<typename T>
-    Vector2<T> Vector2<T>::MoveTowards(const Vector2& current, const Vector2& target, T maxDistanceDelta)
-    {
-        Vector2<T> delta = target - current;
-        T distance = delta.Length();
 
-        if (distance <= maxDistanceDelta || distance == static_cast<T>(0))
+    // ======================
+    // Move Towards
+    // ======================
+
+    template<typename T>
+    Vector2<T> Vector2<T>::MoveTowards(
+        const Vector2& current,
+        const Vector2& target,
+        T maxDistanceDelta
+    )
+    {
+        if (maxDistanceDelta < static_cast<T>(0))
+        {
+            throw std::invalid_argument(
+                "maxDistanceDelta cannot be negative"
+            );
+        }
+
+        const Vector2<T> delta = target - current;
+        const T distance = delta.Length();
+
+        if (distance == static_cast<T>(0) ||
+            distance <= maxDistanceDelta)
+        {
             return target;
+        }
 
         return current + delta / distance * maxDistanceDelta;
     }
-} 
+
+
+    // ======================
+    // Private Functions
+    // ======================
+
+    template<typename T>
+    T Vector2<T>::Clamp(T value, T minValue, T maxValue)
+    {
+        return std::max(minValue, std::min(value, maxValue));
+    }
+}

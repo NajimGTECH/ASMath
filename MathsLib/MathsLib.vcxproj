@@ -18,6 +18,8 @@
     <ClInclude Include="include\Quaternion.h" />
     <ClInclude Include="include\Vector2.h" />
     <ClInclude Include="include\Vector3.h" />
+    <ClInclude Include="Mat3SSE.h" />
+    <ClInclude Include="Vector2SSE.h" />
     <ClInclude Include="include\Vector3Batch.h" />
     <ClInclude Include="src\SseHelpers.h" />
   </ItemGroup>

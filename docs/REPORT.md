@@ -1,7 +1,7 @@
 # Rapport technique – ASM / SIMD, bibliothèque mathématique
 
 GTech 3 – Spécialisation Moteur – projet du 21/09 au 09/10/2026.
-Auteur : Najim BAKKALI. Machine de mesure : AMD Ryzen 7 9800X3D, Windows 11, MSVC 19.38 (Visual Studio, toolset v143).
+Auteurs : Najim BAKKALI et Tristan GERMAIN. Machine de mesure : AMD Ryzen 7 9800X3D, Windows 11, MSVC 19.38 (Visual Studio, toolset v143).
 
 Documents liés : [README](../README.md) (compilation, utilisation, conventions), [désassemblage commenté](DISASSEMBLY.md), résultats bruts dans [`Benchmark/results/`](../Benchmark/results).
 
@@ -207,9 +207,9 @@ Médiane en **ns par élément** (accélération par rapport à `ref-aos` entre 
 | `simd-soa+conv` | 2.796 (**×1.29**) | 1.235 (**×2.79**) | 1.274 (**×2.71**) | 1.928 (**×1.80**) |
 | `simd-aos-approx` | 0.603 (**×5.97**) | 0.477 (**×7.23**) | 0.477 (**×7.24**) | 0.501 (**×6.94**) |
 
-- **Meilleur gain du projet : ×4,9 en AoS, ×6 en SoA.** La référence fait pour chaque vecteur 1 `sqrtss` et **3 `divss`** (instructions lentes, plusieurs cycles de débit chacune) plus une branche (`len > 0`) ; la version SSE fait 1 `sqrtps` et 3 `divps` pour **4 vecteurs** et remplace la branche par un masque (`cmpgt` + `and`). Le calcul est assez lourd pour que la transposition devienne secondaire : on approche le ×4 théorique, et le dépasse légèrement car la branche et l'appel de secours `sqrtf` de la référence disparaissent.
+- **Meilleur gain du projet : ×4,9 en AoS, ×6 en SoA.** La référence fait pour chaque vecteur 1 `sqrtss` et **3 `divss`** (instructions lentes, plusieurs cycles de débit chacune) plus une branche (`len > 0`) ; la version SSE fait 1 `sqrtps` et 3 `divps` pour **4 vecteurs** et remplace la branche par un masque (`cmpgt` + `and`). Le calcul est assez lourd pour que la transposition devienne secondaire. Le ×4 théorique est dépassé : le profiler (§ 10) montre que la référence perd l'essentiel de son temps à recopier un `Vector3` temporaire par la pile, ce que la version SSE ne fait pas. Contre une référence scalaire sans ce temporaire, le gain dû au SIMD seul est d'environ ×3,3.
 - On voit dans le désassemblage de la référence un `call sqrtf` après `sqrtss` : avec `/fp:precise`, MSVC appelle la fonction de la CRT quand le résultat est NaN (racine d'un négatif), pour positionner `errno`. Ce chemin n'est jamais pris ici mais ajoute un test par vecteur.
-- **Régression non expliquée en détail : `ref-soa` est ~12 % plus lent que `ref-aos`**, alors que les deux boucles contiennent les mêmes instructions de calcul (aucune n'est vectorisée, raison 1305). Hypothèse non vérifiée : 6 flux mémoire séparés (3 lectures, 3 écritures) au lieu de 2. À confirmer au profiler.
+- **Régression : `ref-soa` est ~12 % plus lent que `ref-aos`**, alors que les deux boucles contiennent les mêmes instructions de calcul (aucune n'est vectorisée, raison 1305). L'hypothèse de départ (6 flux mémoire au lieu de 2) est contredite par le profiler (§ 10) : les deux versions bloquent au même endroit (copie du `Vector3` temporaire), et la version SoA ajoute des shuffles pour séparer x, y, z avant de les écrire.
 - **Avec conversions**, la SoA reste gagnante (×2,7) car le calcul est cher, mais moins que `simd-aos` (×4,9) : **pour ce traitement, mieux vaut rester en AoS avec transposition dans les registres.**
 - *(Extension)* la version approchée (`rsqrtps`) gagne encore ×1,5 sur `simd-aos` mais avec une erreur maximale mesurée de **2,6·10⁻⁴** sur une composante (bornée par 3,7·10⁻⁴ en relatif, testée). Acceptable pour des directions d'éclairage, pas pour un moteur physique qui renormalise des vecteurs en boucle (l'erreur s'accumule).
 
@@ -270,15 +270,85 @@ Cas réussi et cas bloqué (extension « approfondir l'auto-vectorisation ») : 
 
 ## 10. Analyse au profiler CPU
 
-> **À COMPLÉTER** – cette partie doit être faite dans l'interface de Visual Studio (le profiler n'est pas utilisable depuis la ligne de commande dans les conditions du projet). Protocole prévu :
->
-> 1. Configuration **Release x64**, menu *Déboguer > Profileur de performances* (Alt+F2), outil **Utilisation du processeur**.
-> 2. Arguments de lancement : `--op normalize --sizes 100000 --samples 101` (la normalisation est le traitement au plus grand gain, ~3 s de mesure).
-> 3. Dans le rapport : vue *Fonctions*, comparer le temps inclusif de `math::ref::NormalizeBatch`, `math::simd::NormalizeBatch` et `math::ref::NormalizeBatchSoA` ; double-cliquer pour voir les lignes chaudes (attendu : les `divss` / `sqrtss` dans la référence, `divps` dans la version SSE).
-> 4. Refaire avec `--op dot --version simd-soa+conv --sizes 100000` pour voir la part du temps passée dans `AoSToSoA` par rapport à `simd::DotBatchSoA` (attendu d'après les mesures : ~75 % dans la conversion).
-> 5. Vérifier l'hypothèse sur `ref-soa` plus lent que `ref-aos` pour la normalisation (§ 8).
->
-> Ajouter ici : captures, pourcentages observés, et si les observations confirment ou contredisent les explications des § 8 et 9.
+### Protocole
+
+Outil : le collecteur **Utilisation du processeur** de Visual Studio, lancé en ligne de commande (`VSDiagnostics.exe`, configuration `CpuUsageHigh` = 4 000 échantillons par seconde). Le profiler n'arrête pas le programme : environ 4 000 fois par seconde, il note l'adresse de l'instruction en cours d'exécution. Programme en **Release x64**, sans débogueur. Les PDB sont générés en Release, donc les adresses sont traduites en noms de fonctions.
+
+Les traces sont analysées avec `xperf` (Windows Performance Toolkit) : nombre d'échantillons par fonction, puis par instruction en faisant correspondre chaque adresse au désassemblage de `Benchmark.exe` (`dumpbin /disasm`). Les traces brutes (`.diagsession`, à ouvrir dans Visual Studio) et les désassemblages annotés sont dans [`docs/profiler/`](profiler).
+
+Pour lire un profil par instruction, il faut savoir que l'échantillon tombe souvent **sur l'instruction qui suit celle qui bloque** (*skid*) : un pic sur une instruction simple (un `mov`) veut dire que le processeur attendait juste avant.
+
+**Attention à un piège de notre benchmark** : chaque échantillon dure au moins 2 ms quelle que soit la version (calibration, § 7). Toutes les versions tournent donc à peu près **le même temps**, et comparer le pourcentage de CPU de `ref::NormalizeBatch` à celui de `simd::NormalizeBatch` ne veut rien dire : le profiler mesure *où* le temps passe, pas *combien de fois* la fonction a été appelée. On l'utilise donc pour :
+
+1. **voir les lignes et instructions chaudes à l'intérieur d'une fonction** (où le temps passe dans la référence et dans la version SSE) ;
+2. **comparer des fonctions appelées dans la même mesure**, par exemple la conversion et le calcul dans les versions `+conv`.
+
+| Lancement | Arguments | Durée | Ce qu'on regarde |
+|---|---|---|---|
+| A | `--op normalize --version ref-aos,simd-aos,ref-soa --sizes 100000 --samples 501` | ~4 s | lignes chaudes de `ref::NormalizeBatch`, `simd::NormalizeBatch`, `ref::NormalizeBatchSoA` |
+| B | `--op dot --version simd-soa+conv --sizes 100000 --samples 501` | ~3,5 s | part de `AoSToSoA` et de `simd::DotBatchSoA` sous l'appelant `DotSimdSoAWithConversion` |
+| C | `--op normalize --version simd-soa+conv --sizes 100000 --samples 501` | ~3 s | part de `AoSToSoA`, `simd::NormalizeBatchSoA` et `SoAToAoS` |
+
+Prévisions calculées à partir des mesures du § 8, à confirmer ou infirmer :
+
+- B : 2 conversions × ~0,32 ns + calcul ~0,22 ns ⇒ **~75 % du temps dans `AoSToSoA`**, ~25 % dans le calcul ;
+- C : ~0,32 + ~0,35 ns de conversions pour ~0,58 ns de calcul ⇒ **~50 % dans les conversions** ;
+- A : dans la référence, les lignes chaudes devraient être la racine et les divisions de `Vector3::Normalized` (inlinée dans `ref::NormalizeBatch`) ; dans la version SSE, les `_mm_div_ps` / `_mm_sqrt_ps` et une part visible pour la transposition (`LoadTranspose4`, `StoreTranspose4`) ;
+- A : pour `ref::NormalizeBatchSoA` (12 % plus lente que `ref-aos`, § 8), regarder si le temps se concentre sur les lectures et écritures des 6 tableaux ou sur le calcul.
+
+### Résultats observés
+
+| Prévision | Observé | Verdict |
+|---|---|---|
+| B : ~75 % dans `AoSToSoA` | `AoSToSoA` 4 629 échantillons, `simd::DotBatchSoA` 1 451 ⇒ **76 % / 24 %** | **confirmée** |
+| C : ~50 % dans les conversions | `AoSToSoA` 1 124 + `SoAToAoS` 1 269 contre `simd::NormalizeBatchSoA` 2 085 ⇒ **53 % / 47 %** | **confirmée** |
+| A : la référence passe son temps dans la racine et les divisions | **95 % des échantillons sur la copie du résultat**, moins de 1 % sur `divss` / `sqrtss` | **contredite** |
+| A : `ref-soa` plus lent à cause des 6 flux mémoire | même blocage que `ref-aos` + des shuffles en plus | **contredite** |
+| A : SSE = division/racine + transposition | division/racine ~34 %, shuffles de transposition ~22 % | **confirmée** |
+
+**Conversions (B et C).** Les proportions mesurées au profiler correspondent à celles calculées avec les temps du benchmark (73 % et 54 %). Deux méthodes différentes donnent le même résultat. Dans `AoSToSoA`, le temps est réparti sur une suite de `mov eax, [..]` / `mov [..], eax` : la conversion copie **un float à la fois** (une lecture et une écriture par composante), sans SIMD, car le compilateur ne la vectorise pas (raison 1501, § 9). Pour le produit scalaire, qui coûte très peu, cette copie représente les trois quarts du temps total : c'est la cause de la régression `simd-soa+conv` (×0,7).
+
+**Référence de la normalisation (A) : la vraie cause n'était pas celle qu'on pensait.** Dans `ref::NormalizeBatch` (5 904 échantillons), quatre instructions concentrent 95 % du temps (23 à 25 % chacune, une par élément car la boucle est déroulée ×4). Ce sont toutes la même séquence :
+
+```asm
+divss  xmm6,xmm0                  ; x / len   (idem y, z)
+movss  dword ptr [rbp-60h],xmm6   ; le résultat est écrit dans un Vector3 temporaire sur la pile...
+movss  dword ptr [rbp-5Ch],xmm7   ;   ... 3 écritures de 4 octets
+movss  dword ptr [rbp-58h],xmm8
+movsd  xmm0,mmword ptr [rax]      ; ... puis relu avec UNE lecture de 8 octets (x et y)
+mov    eax,dword ptr [rax+8]      ; <- 23 à 25 % des échantillons (instruction qui suit le blocage)
+```
+
+`Normalized()` s'écrit `return len > 0 ? (*this / len) : Vector3(0, 0, 0);`. Avec le ternaire, le compilateur construit **les deux résultats possibles dans deux `Vector3` temporaires sur la pile**, choisit l'adresse du bon (`rax`), puis le recopie dans `out[i]`. La lecture de 8 octets (`movsd`) porte sur des données écrites par **deux** écritures de 4 octets qui viennent d'avoir lieu. Le processeur ne sait transmettre directement une donnée d'une écriture vers une lecture (*store-to-load forwarding*) que si la lecture vient d'une seule écriture. Sinon, la lecture doit attendre que les écritures soient arrivées dans le cache, ce qui coûte plusieurs cycles par vecteur, en plus de la latence de la racine et des divisions.
+
+**Vérification par une expérience** ([`profiler/normalize_experiment.cpp`](profiler/normalize_experiment.cpp), mêmes options `/O2 /fp:precise`, n = 100 000) : la même normalisation écrite avec un `if` et en écrivant directement `out[i].x`, `out[i].y`, `out[i].z`, sans `Vector3` temporaire.
+
+| Version scalaire | ns / élément |
+|---|---|
+| `out[i] = in[i].Normalized()` (référence actuelle) | 3,48 |
+| `if (len > 0) { out[i].x = in[i].x / len; ... }` | **2,31** (−34 %) |
+
+Les résultats sont **identiques au bit près** (0 différence sur 100 000 vecteurs). Le profiler a donc trouvé un coût réel qui n'était pas visible dans le code C++. Conséquence pour l'analyse : une partie du ×4,9 de `simd-aos` vient de cette faiblesse de la référence. Comparée à la version scalaire améliorée, la version SSE gagne **×3,3** (2,31 / 0,71), ce qui est plus proche du ×4 attendu pour 4 lanes. La référence n'a pas été modifiée, car le cahier des charges demande de la conserver comme point de comparaison. La correction de `Vector3::Normalized()` est une amélioration possible de la bibliothèque (§ 12).
+
+**`ref-soa` plus lent que `ref-aos` (A).** Dans `ref::NormalizeBatchSoA` (6 713 échantillons), 99 % du temps tombe sur les 4 écritures qui suivent la relecture `movsd` du `Vector3` temporaire : **c'est le même blocage**, car la boucle appelle aussi `Normalized()`. En plus, pour écrire x, y et z dans trois tableaux différents, il faut séparer les composantes du registre (`movaps` + `shufps`) et faire 3 écritures séparées. L'hypothèse des « 6 flux mémoire » n'est pas confirmée : l'écart vient d'instructions en plus après le même blocage.
+
+**Version SSE de la normalisation (A).** Dans `simd::NormalizeBatch` (4 889 échantillons), le temps est réparti sur toute la boucle (aucune instruction au-dessus de 14 %), ce qui est le signe d'une boucle sans blocage majeur :
+
+| Instructions | Part des échantillons | Rôle |
+|---|---|---|
+| `divps`, `sqrtps` et les `andps` qui les suivent | ~34 % | division et racine pour 4 vecteurs ; les `andps` (masque du vecteur nul) attendent le résultat de `divps` |
+| `shufps`, `unpcklps` | ~22 % | transposition AoS ↔ lanes (`LoadTranspose4`, `StoreTranspose4`) |
+| `movaps` | ~16 % | copies de registres : en SSE, une instruction écrase son premier opérande, donc il faut copier avant |
+| `movups` (lectures / écritures) | ~10 % | 3 lectures + 3 écritures de 16 octets pour 4 vecteurs |
+| `mulps`, `addps`, `cmpltps`, divers | ~17 % | longueur au carré, masque, boucle |
+
+La version SSE n'a plus de `Vector3` temporaire : les résultats restent dans les registres et sont écrits directement avec `movups`. Une partie de son avance vient donc aussi de là, pas seulement des 4 lanes. Les ~16 % de `movaps` disparaîtraient en partie avec AVX (instructions à 3 opérandes, § 12).
+
+### Bilan du profiler
+
+- Il **confirme** les deux explications basées sur les mesures : le coût des conversions AoS ↔ SoA, et la répartition calcul / transposition de la version SSE.
+- Il **contredit** l'explication du rapport sur la référence (on pensait que la racine et les divisions dominaient) et l'hypothèse sur `ref-soa`. La vraie cause, une copie par la pile qui bloque le transfert écriture → lecture, a été **vérifiée par une mesure** (−34 % sans le temporaire).
+- Leçon : **un gain SIMD se mesure contre une référence**, et si la référence a un défaut caché, le gain annoncé est surestimé. Ici le ×4,9 mesuré est réel par rapport à la bibliothèque telle qu'elle est, mais le gain dû à la vectorisation seule est d'environ ×3,3.
 
 ## 11. Écarts numériques
 
@@ -295,7 +365,8 @@ Cas réussi et cas bloqué (extension « approfondir l'auto-vectorisation ») : 
 - La détection hors limites par page protégée couvre les tableaux AoS ; pour les `Vec3SoA` (`std::vector`), seules les écritures après `n` sont détectées (sentinelles), pas les lectures.
 - Les vecteurs aux composantes > ~10¹⁹ (longueur infinie) ne sont pas gérés par la normalisation ; les composantes < ~10⁻¹⁹ sont traitées comme un vecteur nul (documenté et testé).
 - Mesures sur **une seule machine** (Zen 5) ; les rapports entre versions peuvent changer sur un CPU Intel ou plus ancien (latence des divisions, des shuffles).
-- Profiler : voir § 10.
+- `Vector3::Normalized()` recopie son résultat par un `Vector3` temporaire sur la pile, ce qui ralentit la référence d'environ 34 % (§ 10). La corriger (un `if` et une écriture directe) améliorerait toute la bibliothèque ; elle n'a pas été modifiée pour garder la même référence pendant tout le projet.
+- Profiler : l'analyse instruction par instruction repose sur l'échantillonnage. Le *skid* déplace les échantillons d'une ou deux instructions, donc on interprète des blocs d'instructions, pas une instruction isolée. Les captures de l'interface de Visual Studio ne sont pas jointes ; les traces `.diagsession` de `docs/profiler/` peuvent y être ouvertes.
 
 ## 13. Résultats bruts
 
@@ -307,20 +378,31 @@ Cas réussi et cas bloqué (extension « approfondir l'auto-vectorisation ») : 
 - `console_output.txt` – la sortie console complète ;
 - `run2/` – la deuxième exécution complète utilisée pour estimer la reproductibilité.
 
+`docs/profiler/` (§ 10) :
+
+- `A_normalize.diagsession`, `B_dot_conv.diagsession`, `C_normalize_conv.diagsession` – traces du profiler CPU, à ouvrir dans Visual Studio ;
+- `*_hotspots.txt` – nombre d'échantillons par fonction, puis désassemblage de chaque fonction mesurée avec le nombre et le pourcentage d'échantillons par instruction ;
+- `normalize_experiment.cpp` et `normalize_experiment_output.txt` – l'expérience qui vérifie le coût du `Vector3` temporaire.
+
+Les tableaux du § 8 viennent de la campagne du 08/10. Les fichiers à la racine de `Benchmark/results/` sont ceux de la campagne du **11/10** (lancée sans débogueur, après l'ajout des opérations `Vector2` / `Mat3`). Sur les 86 médianes communes, l'écart moyen avec le 08/10 est d'environ 4 % ; les plus gros écarts concernent n = 4 000 000 (limité par la mémoire) et la référence `mat4mul` (~24 % plus lente le 11/10 alors que son code n'a pas changé, non expliqué). Les conclusions du § 8 ne changent pas ; l'analyse des résultats du 11/10 est dans le README.
+
 ## 14. Sources
 
 - Intel, *Intrinsics Guide* – sémantique et précision de `_mm_shuffle_ps`, `_mm_rsqrt_ps` (erreur relative ≤ 1,5·2⁻¹²), etc.
 - Microsoft Learn : *x64 calling convention* ; *MASM for x64 (ml64.exe)* ; */arch (x64)* ; */fp (Specify floating-point behavior)* ; *Vectorizer and parallelizer messages* (codes 502, 1200, 1305, 1501) ; *Write unit tests for C/C++ (Microsoft Unit Testing Framework)* ; *VirtualAlloc / VirtualProtect*.
 - N. J. Higham, *Accuracy and Stability of Numerical Algorithms*, 2ᵉ éd., SIAM, 2002, chap. 3 (bornes γ(k) d'erreur des sommes et produits scalaires).
 - Google Benchmark, *User guide* – principes d'échauffement, répétitions, empêcher l'élimination du calcul.
+- Microsoft Learn : *CPU usage tool (Visual Studio profiler)*, *VSDiagnostics.exe (standalone collector)* ; Windows Performance Toolkit (`xperf`) ; Agner Fog, *The microarchitecture of Intel, AMD and VIA CPUs* (store forwarding).
 - Cours ASM / SIMD GTech 3 (squelette de fonction MASM).
 
 ## 15. Utilisation de l'IA générative
 
-Conformément au cahier des charges, usage significatif signalé : **Claude Code (Anthropic)** a été utilisé comme assistant pour :
+Conformément au cahier des charges, usage significatif signalé : **Claude (Anthropic)** a été utilisé par les deux membres du binôme comme assistant pour :
 
-- l'audit de la bibliothèque (repérage des incohérences de convention vecteurs lignes / colonnes) ;
-- la rédaction et la simplification du code SIMD, de la fonction MASM, des tests et de l'outil de benchmark ;
-- la mise en forme de ce rapport, du README et du désassemblage commenté.
+- mieux comprendre le cahier des charges, l'objectif du projet et les fonctions intrinsèques SSE/SSE2 ;
+- accélérer la rédaction du code ;
+- mettre en commun rapidement nos travaux lors des merges, puis pousser vers le dépôt Git ;
+- aider à collecter et analyser les traces du profiler CPU (§ 10) ;
+- aider à rédiger ce rapport, le README et le désassemblage commenté.
 
 Toutes les mesures proviennent d'exécutions réelles du programme sur la machine indiquée (résultats bruts joints), et chaque affirmation sur le code machine provient de la sortie de `dumpbin` du binaire compilé. Le code a été relu, compris et testé ; chaque fonction peut être expliquée et modifiée lors de la revue de code.

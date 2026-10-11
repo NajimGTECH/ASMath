@@ -1,0 +1,509 @@
+Run C: Benchmark.exe --op normalize --version simd-soa+conv --sizes 100000 --samples 501
+
+Samples per function (Benchmark.exe only, CpuUsageHigh = 4000 samples/s):
+   5929 Benchmark.exe!math::ref::NormalizeBatch
+   2085 Benchmark.exe!math::simd::NormalizeBatchSoA
+   1269 Benchmark.exe!math::SoAToAoS
+   1124 Benchmark.exe!math::AoSToSoA
+      5 ntoskrnl.exe!0xfffff8049b2b082d
+      3 ntoskrnl.exe!0xfffff8049b2bd89c
+
+== ?AoSToSoA@math@@YAXPEBV?$Vector3@M@1@AEAUVec3SoA@1@_K@Z:
+     0   0.0%  0000000140018720: 48 89 5C 24 10     mov         qword ptr [rsp+10h],rbx
+     0   0.0%  0000000140018725: 48 89 6C 24 18     mov         qword ptr [rsp+18h],rbp
+     0   0.0%  000000014001872A: 56                 push        rsi
+     0   0.0%  000000014001872B: 4C 8B 0A           mov         r9,qword ptr [rdx]
+     0   0.0%  000000014001872E: 33 DB              xor         ebx,ebx
+     0   0.0%  0000000140018730: 48 8B 72 18        mov         rsi,qword ptr [rdx+18h]
+     0   0.0%  0000000140018734: 48 8B E9           mov         rbp,rcx
+     0   0.0%  0000000140018737: 4C 8B 5A 30        mov         r11,qword ptr [rdx+30h]
+     0   0.0%  000000014001873B: 4C 2B CE           sub         r9,rsi
+     0   0.0%  000000014001873E: 49 83 F8 04        cmp         r8,4
+     0   0.0%  0000000140018742: 0F 82 9B 00 00 00  jb          00000001400187E3
+     0   0.0%  0000000140018748: 48 89 7C 24 10     mov         qword ptr [rsp+10h],rdi
+     0   0.0%  000000014001874D: 4C 8D 51 08        lea         r10,[rcx+8]
+     0   0.0%  0000000140018751: 49 8B CB           mov         rcx,r11
+     0   0.0%  0000000140018754: 49 8D 78 FC        lea         rdi,[r8-4]
+     0   0.0%  0000000140018758: 48 2B CE           sub         rcx,rsi
+     0   0.0%  000000014001875B: 48 C1 EF 02        shr         rdi,2
+     0   0.0%  000000014001875F: 48 FF C7           inc         rdi
+     0   0.0%  0000000140018762: 48 8D 56 04        lea         rdx,[rsi+4]
+     0   0.0%  0000000140018766: 48 8D 1C BD 00 00  lea         rbx,[rdi*4]
+     0   0.0%  000000014001876E: 66 90              nop
+     0   0.0%  0000000140018770: 41 8B 42 F8        mov         eax,dword ptr [r10-8]
+     6   0.5%  0000000140018774: 4D 8D 52 30        lea         r10,[r10+30h]
+     3   0.3%  0000000140018778: 42 89 44 0A FC     mov         dword ptr [rdx+r9-4],eax
+   183  16.3%  000000014001877D: 48 8D 52 10        lea         rdx,[rdx+10h]
+    10   0.9%  0000000140018781: 41 8B 42 CC        mov         eax,dword ptr [r10-34h]
+    46   4.1%  0000000140018785: 89 42 EC           mov         dword ptr [rdx-14h],eax
+     6   0.5%  0000000140018788: 41 8B 42 D0        mov         eax,dword ptr [r10-30h]
+     1   0.1%  000000014001878C: 89 44 0A EC        mov         dword ptr [rdx+rcx-14h],eax
+     4   0.4%  0000000140018790: 41 8B 42 D4        mov         eax,dword ptr [r10-2Ch]
+     5   0.4%  0000000140018794: 42 89 44 0A F0     mov         dword ptr [rdx+r9-10h],eax
+   258  23.0%  0000000140018799: 41 8B 42 D8        mov         eax,dword ptr [r10-28h]
+    12   1.1%  000000014001879D: 89 42 F0           mov         dword ptr [rdx-10h],eax
+    65   5.8%  00000001400187A0: 41 8B 42 DC        mov         eax,dword ptr [r10-24h]
+    26   2.3%  00000001400187A4: 89 44 0A F0        mov         dword ptr [rdx+rcx-10h],eax
+     1   0.1%  00000001400187A8: 41 8B 42 E0        mov         eax,dword ptr [r10-20h]
+     6   0.5%  00000001400187AC: 42 89 44 0A F4     mov         dword ptr [rdx+r9-0Ch],eax
+   178  15.8%  00000001400187B1: 41 8B 42 E4        mov         eax,dword ptr [r10-1Ch]
+    45   4.0%  00000001400187B5: 89 42 F4           mov         dword ptr [rdx-0Ch],eax
+    51   4.5%  00000001400187B8: 41 8B 42 E8        mov         eax,dword ptr [r10-18h]
+    21   1.9%  00000001400187BC: 89 44 0A F4        mov         dword ptr [rdx+rcx-0Ch],eax
+     2   0.2%  00000001400187C0: 41 8B 42 EC        mov         eax,dword ptr [r10-14h]
+     0   0.0%  00000001400187C4: 42 89 44 0A F8     mov         dword ptr [rdx+r9-8],eax
+     6   0.5%  00000001400187C9: 41 8B 42 F0        mov         eax,dword ptr [r10-10h]
+   140  12.5%  00000001400187CD: 89 42 F8           mov         dword ptr [rdx-8],eax
+    10   0.9%  00000001400187D0: 41 8B 42 F4        mov         eax,dword ptr [r10-0Ch]
+    31   2.8%  00000001400187D4: 89 44 0A F8        mov         dword ptr [rdx+rcx-8],eax
+     6   0.5%  00000001400187D8: 48 83 EF 01        sub         rdi,1
+     2   0.2%  00000001400187DC: 75 92              jne         0000000140018770
+     0   0.0%  00000001400187DE: 48 8B 7C 24 10     mov         rdi,qword ptr [rsp+10h]
+     0   0.0%  00000001400187E3: 49 3B D8           cmp         rbx,r8
+     0   0.0%  00000001400187E6: 73 39              jae         0000000140018821
+     0   0.0%  00000001400187E8: 48 8D 04 5B        lea         rax,[rbx+rbx*2]
+     0   0.0%  00000001400187EC: 4C 2B DE           sub         r11,rsi
+     0   0.0%  00000001400187EF: 48 8D 55 08        lea         rdx,[rbp+8]
+     0   0.0%  00000001400187F3: 4C 2B C3           sub         r8,rbx
+     0   0.0%  00000001400187F6: 48 8D 14 82        lea         rdx,[rdx+rax*4]
+     0   0.0%  00000001400187FA: 48 8D 0C 9E        lea         rcx,[rsi+rbx*4]
+     0   0.0%  00000001400187FE: 8B 42 F8           mov         eax,dword ptr [rdx-8]
+     0   0.0%  0000000140018801: 48 8D 52 0C        lea         rdx,[rdx+0Ch]
+     0   0.0%  0000000140018805: 41 89 04 09        mov         dword ptr [r9+rcx],eax
+     0   0.0%  0000000140018809: 48 8D 49 04        lea         rcx,[rcx+4]
+     0   0.0%  000000014001880D: 8B 42 F0           mov         eax,dword ptr [rdx-10h]
+     0   0.0%  0000000140018810: 89 41 FC           mov         dword ptr [rcx-4],eax
+     0   0.0%  0000000140018813: 8B 42 F4           mov         eax,dword ptr [rdx-0Ch]
+     0   0.0%  0000000140018816: 42 89 44 19 FC     mov         dword ptr [rcx+r11-4],eax
+     0   0.0%  000000014001881B: 49 83 E8 01        sub         r8,1
+     0   0.0%  000000014001881F: 75 DD              jne         00000001400187FE
+     0   0.0%  0000000140018821: 48 8B 5C 24 18     mov         rbx,qword ptr [rsp+18h]
+     0   0.0%  0000000140018826: 48 8B 6C 24 20     mov         rbp,qword ptr [rsp+20h]
+     0   0.0%  000000014001882B: 5E                 pop         rsi
+     0   0.0%  000000014001882C: C3                 ret
+     0   0.0%  000000014001882D: CC CC CC                                         III
+total samples in function: 1124
+
+== ?SoAToAoS@math@@YAXAEBUVec3SoA@1@PEAV?$Vector3@M@1@_K@Z:
+     0   0.0%  000000014001AC20: 48 89 6C 24 18     mov         qword ptr [rsp+18h],rbp
+     0   0.0%  000000014001AC25: 56                 push        rsi
+     0   0.0%  000000014001AC26: 4C 8B 09           mov         r9,qword ptr [rcx]
+     0   0.0%  000000014001AC29: 45 33 DB           xor         r11d,r11d
+     0   0.0%  000000014001AC2C: 48 8B 71 18        mov         rsi,qword ptr [rcx+18h]
+     0   0.0%  000000014001AC30: 48 8B EA           mov         rbp,rdx
+     0   0.0%  000000014001AC33: 4C 8B 51 30        mov         r10,qword ptr [rcx+30h]
+     0   0.0%  000000014001AC37: 4C 2B CE           sub         r9,rsi
+     0   0.0%  000000014001AC3A: 49 83 F8 04        cmp         r8,4
+     0   0.0%  000000014001AC3E: 0F 82 BC 00 00 00  jb          000000014001AD00
+     0   0.0%  000000014001AC44: 48 89 5C 24 10     mov         qword ptr [rsp+10h],rbx
+     0   0.0%  000000014001AC49: 48 8D 4E 04        lea         rcx,[rsi+4]
+     0   0.0%  000000014001AC4D: 48 89 7C 24 18     mov         qword ptr [rsp+18h],rdi
+     0   0.0%  000000014001AC52: 49 8B DA           mov         rbx,r10
+     0   0.0%  000000014001AC55: 49 8D 78 FC        lea         rdi,[r8-4]
+     0   0.0%  000000014001AC59: 48 83 C2 14        add         rdx,14h
+     0   0.0%  000000014001AC5D: 48 C1 EF 02        shr         rdi,2
+     0   0.0%  000000014001AC61: 48 2B DE           sub         rbx,rsi
+     0   0.0%  000000014001AC64: 48 FF C7           inc         rdi
+     0   0.0%  000000014001AC67: 4C 8D 1C BD 00 00  lea         r11,[rdi*4]
+     0   0.0%  000000014001AC6F: 90                 nop
+     0   0.0%  000000014001AC70: F3 0F 10 41 FC     movss       xmm0,dword ptr [rcx-4]
+    45   3.5%  000000014001AC75: 48 8D 52 30        lea         rdx,[rdx+30h]
+    11   0.9%  000000014001AC79: F3 0F 10 4C 0B FC  movss       xmm1,dword ptr [rbx+rcx-4]
+    74   5.8%  000000014001AC7F: 41 8B 44 09 FC     mov         eax,dword ptr [r9+rcx-4]
+    40   3.2%  000000014001AC84: 48 8D 49 10        lea         rcx,[rcx+10h]
+    19   1.5%  000000014001AC88: 89 42 BC           mov         dword ptr [rdx-44h],eax
+    67   5.3%  000000014001AC8B: F3 0F 11 42 C0     movss       dword ptr [rdx-40h],xmm0
+    34   2.7%  000000014001AC90: F3 0F 11 4A C4     movss       dword ptr [rdx-3Ch],xmm1
+    73   5.8%  000000014001AC95: F3 0F 10 51 F0     movss       xmm2,dword ptr [rcx-10h]
+    37   2.9%  000000014001AC9A: F3 0F 10 44 0B F0  movss       xmm0,dword ptr [rbx+rcx-10h]
+    27   2.1%  000000014001ACA0: 41 8B 44 09 F0     mov         eax,dword ptr [r9+rcx-10h]
+    62   4.9%  000000014001ACA5: 89 42 C8           mov         dword ptr [rdx-38h],eax
+    57   4.5%  000000014001ACA8: F3 0F 11 52 CC     movss       dword ptr [rdx-34h],xmm2
+    26   2.0%  000000014001ACAD: F3 0F 11 42 D0     movss       dword ptr [rdx-30h],xmm0
+    71   5.6%  000000014001ACB2: F3 0F 10 49 F4     movss       xmm1,dword ptr [rcx-0Ch]
+    64   5.0%  000000014001ACB7: 41 8B 44 09 F4     mov         eax,dword ptr [r9+rcx-0Ch]
+    60   4.7%  000000014001ACBC: F3 0F 10 54 0B F4  movss       xmm2,dword ptr [rbx+rcx-0Ch]
+    46   3.6%  000000014001ACC2: 89 42 D4           mov         dword ptr [rdx-2Ch],eax
+    35   2.8%  000000014001ACC5: F3 0F 11 4A D8     movss       dword ptr [rdx-28h],xmm1
+    64   5.0%  000000014001ACCA: F3 0F 11 52 DC     movss       dword ptr [rdx-24h],xmm2
+    42   3.3%  000000014001ACCF: F3 0F 10 41 F8     movss       xmm0,dword ptr [rcx-8]
+    30   2.4%  000000014001ACD4: F3 0F 10 4C 0B F8  movss       xmm1,dword ptr [rbx+rcx-8]
+    49   3.9%  000000014001ACDA: 41 8B 44 09 F8     mov         eax,dword ptr [r9+rcx-8]
+    35   2.8%  000000014001ACDF: 89 42 E0           mov         dword ptr [rdx-20h],eax
+    40   3.2%  000000014001ACE2: F3 0F 11 42 E4     movss       dword ptr [rdx-1Ch],xmm0
+    80   6.3%  000000014001ACE7: F3 0F 11 4A E8     movss       dword ptr [rdx-18h],xmm1
+    58   4.6%  000000014001ACEC: 48 83 EF 01        sub         rdi,1
+    23   1.8%  000000014001ACF0: 0F 85 7A FF FF FF  jne         000000014001AC70
+     0   0.0%  000000014001ACF6: 48 8B 7C 24 18     mov         rdi,qword ptr [rsp+18h]
+     0   0.0%  000000014001ACFB: 48 8B 5C 24 10     mov         rbx,qword ptr [rsp+10h]
+     0   0.0%  000000014001AD00: 4D 3B D8           cmp         r11,r8
+     0   0.0%  000000014001AD03: 73 3F              jae         000000014001AD44
+     0   0.0%  000000014001AD05: 4B 8D 04 5B        lea         rax,[r11+r11*2]
+     0   0.0%  000000014001AD09: 4C 2B D6           sub         r10,rsi
+     0   0.0%  000000014001AD0C: 48 8D 55 08        lea         rdx,[rbp+8]
+     0   0.0%  000000014001AD10: 4D 2B C3           sub         r8,r11
+     0   0.0%  000000014001AD13: 48 8D 14 82        lea         rdx,[rdx+rax*4]
+     0   0.0%  000000014001AD17: 4A 8D 0C 9E        lea         rcx,[rsi+r11*4]
+     0   0.0%  000000014001AD1B: F3 0F 10 01        movss       xmm0,dword ptr [rcx]
+     0   0.0%  000000014001AD1F: 48 8D 52 0C        lea         rdx,[rdx+0Ch]
+     0   0.0%  000000014001AD23: F3 42 0F 10 0C 11  movss       xmm1,dword ptr [rcx+r10]
+     0   0.0%  000000014001AD29: 42 8B 04 09        mov         eax,dword ptr [rcx+r9]
+     0   0.0%  000000014001AD2D: 48 8D 49 04        lea         rcx,[rcx+4]
+     0   0.0%  000000014001AD31: 89 42 EC           mov         dword ptr [rdx-14h],eax
+     0   0.0%  000000014001AD34: F3 0F 11 42 F0     movss       dword ptr [rdx-10h],xmm0
+     0   0.0%  000000014001AD39: F3 0F 11 4A F4     movss       dword ptr [rdx-0Ch],xmm1
+     0   0.0%  000000014001AD3E: 49 83 E8 01        sub         r8,1
+     0   0.0%  000000014001AD42: 75 D7              jne         000000014001AD1B
+     0   0.0%  000000014001AD44: 48 8B 6C 24 20     mov         rbp,qword ptr [rsp+20h]
+     0   0.0%  000000014001AD49: 5E                 pop         rsi
+     0   0.0%  000000014001AD4A: C3                 ret
+     0   0.0%  000000014001AD4B: CC CC CC CC CC                                   IIIII
+total samples in function: 1269
+
+== ?NormalizeBatchSoA@simd@math@@YAXAEBUVec3SoA@2@AEAU32@_K@Z:
+     0   0.0%  000000014001A6A0: 40 55              push        rbp
+     0   0.0%  000000014001A6A2: 56                 push        rsi
+     0   0.0%  000000014001A6A3: 57                 push        rdi
+     0   0.0%  000000014001A6A4: 41 54              push        r12
+     0   0.0%  000000014001A6A6: 41 55              push        r13
+     0   0.0%  000000014001A6A8: 41 56              push        r14
+     0   0.0%  000000014001A6AA: 41 57              push        r15
+     0   0.0%  000000014001A6AC: 48 8D 6C 24 D9     lea         rbp,[rsp-27h]
+     0   0.0%  000000014001A6B1: 48 81 EC C0 00 00  sub         rsp,0C0h
+     0   0.0%  000000014001A6B8: 4C 8B 31           mov         r14,qword ptr [rcx]
+     0   0.0%  000000014001A6BB: 45 33 FF           xor         r15d,r15d
+     0   0.0%  000000014001A6BE: 48 8B 71 18        mov         rsi,qword ptr [rcx+18h]
+     0   0.0%  000000014001A6C2: 49 8B F8           mov         rdi,r8
+     0   0.0%  000000014001A6C5: 48 8B 49 30        mov         rcx,qword ptr [rcx+30h]
+     0   0.0%  000000014001A6C9: 4C 8B 1A           mov         r11,qword ptr [rdx]
+     0   0.0%  000000014001A6CC: 4C 8B 62 18        mov         r12,qword ptr [rdx+18h]
+     0   0.0%  000000014001A6D0: 4C 8B 6A 30        mov         r13,qword ptr [rdx+30h]
+     0   0.0%  000000014001A6D4: 4C 89 75 8F        mov         qword ptr [rbp-71h],r14
+     0   0.0%  000000014001A6D8: 4C 2B F6           sub         r14,rsi
+     0   0.0%  000000014001A6DB: 0F 29 B4 24 A0 00  movaps      xmmword ptr [rsp+0A0h],xmm6
+     0   0.0%  000000014001A6E3: 48 89 4D 7F        mov         qword ptr [rbp+7Fh],rcx
+     0   0.0%  000000014001A6E7: 4C 89 5D 87        mov         qword ptr [rbp-79h],r11
+     0   0.0%  000000014001A6EB: 4C 89 65 9F        mov         qword ptr [rbp-61h],r12
+     0   0.0%  000000014001A6EF: 4C 89 6D 97        mov         qword ptr [rbp-69h],r13
+     0   0.0%  000000014001A6F3: 49 83 F8 04        cmp         r8,4
+     0   0.0%  000000014001A6F7: 0F 82 86 00 00 00  jb          000000014001A783
+     0   0.0%  000000014001A6FD: 49 8B D3           mov         rdx,r11
+     0   0.0%  000000014001A700: 45 8D 57 04        lea         r10d,[r15+4]
+     0   0.0%  000000014001A704: 4D 8B C4           mov         r8,r12
+     0   0.0%  000000014001A707: 48 2B D6           sub         rdx,rsi
+     0   0.0%  000000014001A70A: 4C 2B C6           sub         r8,rsi
+     0   0.0%  000000014001A70D: 48 2B CE           sub         rcx,rsi
+     0   0.0%  000000014001A710: 4D 8B CD           mov         r9,r13
+     0   0.0%  000000014001A713: 0F 57 F6           xorps       xmm6,xmm6
+     0   0.0%  000000014001A716: 4C 2B CE           sub         r9,rsi
+     0   0.0%  000000014001A719: 48 8B C6           mov         rax,rsi
+     0   0.0%  000000014001A71C: 0F 1F 40 00        nop         dword ptr [rax]
+     0   0.0%  000000014001A720: 41 0F 10 1C 06     movups      xmm3,xmmword ptr [r14+rax]
+    10   0.5%  000000014001A725: 49 83 C7 04        add         r15,4
+    30   1.4%  000000014001A729: 49 83 C2 04        add         r10,4
+     0   0.0%  000000014001A72D: 0F 10 20           movups      xmm4,xmmword ptr [rax]
+     0   0.0%  000000014001A730: 0F 10 2C 01        movups      xmm5,xmmword ptr [rcx+rax]
+    12   0.6%  000000014001A734: 0F 28 D4           movaps      xmm2,xmm4
+    15   0.7%  000000014001A737: 0F 28 C3           movaps      xmm0,xmm3
+    64   3.1%  000000014001A73A: 0F 59 D4           mulps       xmm2,xmm4
+     1   0.0%  000000014001A73D: 0F 28 CD           movaps      xmm1,xmm5
+     0   0.0%  000000014001A740: 0F 59 CD           mulps       xmm1,xmm5
+   155   7.4%  000000014001A743: 0F 59 C3           mulps       xmm0,xmm3
+     0   0.0%  000000014001A746: 0F 58 D0           addps       xmm2,xmm0
+     0   0.0%  000000014001A749: 0F 58 D1           addps       xmm2,xmm1
+    86   4.1%  000000014001A74C: 0F 28 CE           movaps      xmm1,xmm6
+   250  12.0%  000000014001A74F: 0F 51 C2           sqrtps      xmm0,xmm2
+   105   5.0%  000000014001A752: 0F 5E D8           divps       xmm3,xmm0
+   786  37.7%  000000014001A755: 0F 5E E0           divps       xmm4,xmm0
+   178   8.5%  000000014001A758: 0F 5E E8           divps       xmm5,xmm0
+   274  13.1%  000000014001A75B: 0F C2 C8 01        cmpltps     xmm1,xmm0
+     0   0.0%  000000014001A75F: 0F 54 D9           andps       xmm3,xmm1
+     0   0.0%  000000014001A762: 0F 54 E1           andps       xmm4,xmm1
+    11   0.5%  000000014001A765: 0F 11 1C 02        movups      xmmword ptr [rdx+rax],xmm3
+    10   0.5%  000000014001A769: 41 0F 11 24 00     movups      xmmword ptr [r8+rax],xmm4
+     0   0.0%  000000014001A76E: 0F 54 E9           andps       xmm5,xmm1
+    41   2.0%  000000014001A771: 41 0F 11 2C 01     movups      xmmword ptr [r9+rax],xmm5
+    14   0.7%  000000014001A776: 48 83 C0 10        add         rax,10h
+    43   2.1%  000000014001A77A: 4C 3B D7           cmp         r10,rdi
+     0   0.0%  000000014001A77D: 76 A1              jbe         000000014001A720
+     0   0.0%  000000014001A77F: 48 8B 4D 7F        mov         rcx,qword ptr [rbp+7Fh]
+     0   0.0%  000000014001A783: 4C 3B FF           cmp         r15,rdi
+     0   0.0%  000000014001A786: 0F 83 72 04 00 00  jae         000000014001ABFE
+     0   0.0%  000000014001A78C: 44 0F 29 4C 24 70  movaps      xmmword ptr [rsp+70h],xmm9
+     0   0.0%  000000014001A792: 48 8B C7           mov         rax,rdi
+     0   0.0%  000000014001A795: 48 89 9C 24 B8 00  mov         qword ptr [rsp+0B8h],rbx
+     0   0.0%  000000014001A79D: 49 2B C7           sub         rax,r15
+     0   0.0%  000000014001A7A0: 0F 29 BC 24 90 00  movaps      xmmword ptr [rsp+90h],xmm7
+     0   0.0%  000000014001A7A8: 45 0F 57 C9        xorps       xmm9,xmm9
+     0   0.0%  000000014001A7AC: 44 0F 29 84 24 80  movaps      xmmword ptr [rsp+80h],xmm8
+     0   0.0%  000000014001A7B5: 48 83 F8 04        cmp         rax,4
+     0   0.0%  000000014001A7B9: 0F 82 37 03 00 00  jb          000000014001AAF6
+     0   0.0%  000000014001A7BF: 48 8B 55 97        mov         rdx,qword ptr [rbp-69h]
+     0   0.0%  000000014001A7C3: 48 8D 5E 04        lea         rbx,[rsi+4]
+     0   0.0%  000000014001A7C7: 4C 8B C1           mov         r8,rcx
+     0   0.0%  000000014001A7CA: 4A 8D 1C BB        lea         rbx,[rbx+r15*4]
+     0   0.0%  000000014001A7CE: 49 8B CC           mov         rcx,r12
+     0   0.0%  000000014001A7D1: 4C 2B C6           sub         r8,rsi
+     0   0.0%  000000014001A7D4: 48 2B CE           sub         rcx,rsi
+     0   0.0%  000000014001A7D7: 4C 89 45 77        mov         qword ptr [rbp+77h],r8
+     0   0.0%  000000014001A7DB: 48 2B D6           sub         rdx,rsi
+     0   0.0%  000000014001A7DE: 48 89 4D 67        mov         qword ptr [rbp+67h],rcx
+     0   0.0%  000000014001A7E2: 4C 8B E7           mov         r12,rdi
+     0   0.0%  000000014001A7E5: 48 89 55 6F        mov         qword ptr [rbp+6Fh],rdx
+     0   0.0%  000000014001A7E9: 4D 2B E7           sub         r12,r15
+     0   0.0%  000000014001A7EC: 4D 8B EB           mov         r13,r11
+     0   0.0%  000000014001A7EF: 49 83 EC 04        sub         r12,4
+     0   0.0%  000000014001A7F3: 4C 2B EE           sub         r13,rsi
+     0   0.0%  000000014001A7F6: 49 C1 EC 02        shr         r12,2
+     0   0.0%  000000014001A7FA: 49 FF C4           inc         r12
+     0   0.0%  000000014001A7FD: 4F 8D 3C A7        lea         r15,[r15+r12*4]
+     0   0.0%  000000014001A801: F3 42 0F 10 74 33  movss       xmm6,dword ptr [rbx+r14-4]
+     0   0.0%  000000014001A808: F3 0F 10 7B FC     movss       xmm7,dword ptr [rbx-4]
+     0   0.0%  000000014001A80D: 0F 28 C6           movaps      xmm0,xmm6
+     0   0.0%  000000014001A810: F3 46 0F 10 44 03  movss       xmm8,dword ptr [rbx+r8-4]
+     0   0.0%  000000014001A817: 0F 28 D7           movaps      xmm2,xmm7
+     0   0.0%  000000014001A81A: F3 0F 59 D7        mulss       xmm2,xmm7
+     0   0.0%  000000014001A81E: 41 0F 28 C8        movaps      xmm1,xmm8
+     0   0.0%  000000014001A822: F3 0F 59 C6        mulss       xmm0,xmm6
+     0   0.0%  000000014001A826: F3 41 0F 59 C8     mulss       xmm1,xmm8
+     0   0.0%  000000014001A82B: F3 0F 58 D0        addss       xmm2,xmm0
+     0   0.0%  000000014001A82F: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001A832: F3 0F 58 D1        addss       xmm2,xmm1
+     0   0.0%  000000014001A836: 0F 2E C2           ucomiss     xmm0,xmm2
+     0   0.0%  000000014001A839: 77 09              ja          000000014001A844
+     0   0.0%  000000014001A83B: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001A83E: F3 0F 51 C2        sqrtss      xmm0,xmm2
+     0   0.0%  000000014001A842: EB 14              jmp         000000014001A858
+     0   0.0%  000000014001A844: 0F 28 C2           movaps      xmm0,xmm2
+     0   0.0%  000000014001A847: E8 32 3F 00 00     call        sqrtf
+     0   0.0%  000000014001A84C: 48 8B 4D 67        mov         rcx,qword ptr [rbp+67h]
+     0   0.0%  000000014001A850: 48 8B 55 6F        mov         rdx,qword ptr [rbp+6Fh]
+     0   0.0%  000000014001A854: 4C 8B 45 77        mov         r8,qword ptr [rbp+77h]
+     0   0.0%  000000014001A858: 41 0F 2F C1        comiss      xmm0,xmm9
+     0   0.0%  000000014001A85C: 76 23              jbe         000000014001A881
+     0   0.0%  000000014001A85E: F3 0F 5E F0        divss       xmm6,xmm0
+     0   0.0%  000000014001A862: 48 8D 45 A7        lea         rax,[rbp-59h]
+     0   0.0%  000000014001A866: F3 0F 5E F8        divss       xmm7,xmm0
+     0   0.0%  000000014001A86A: F3 44 0F 5E C0     divss       xmm8,xmm0
+     0   0.0%  000000014001A86F: F3 0F 11 75 A7     movss       dword ptr [rbp-59h],xmm6
+     0   0.0%  000000014001A874: F3 0F 11 7D AB     movss       dword ptr [rbp-55h],xmm7
+     0   0.0%  000000014001A879: F3 44 0F 11 45 AF  movss       dword ptr [rbp-51h],xmm8
+     0   0.0%  000000014001A87F: EB 13              jmp         000000014001A894
+     0   0.0%  000000014001A881: 48 C7 45 B3 00 00  mov         qword ptr [rbp-4Dh],0
+     0   0.0%  000000014001A889: 48 8D 45 B3        lea         rax,[rbp-4Dh]
+     0   0.0%  000000014001A88D: C7 45 BB 00 00 00  mov         dword ptr [rbp-45h],0
+     0   0.0%  000000014001A894: F2 0F 10 08        movsd       xmm1,mmword ptr [rax]
+     0   0.0%  000000014001A898: F3 42 0F 11 4C 2B  movss       dword ptr [rbx+r13-4],xmm1
+     0   0.0%  000000014001A89F: 0F 28 C1           movaps      xmm0,xmm1
+     0   0.0%  000000014001A8A2: 0F C6 C0 55        shufps      xmm0,xmm0,55h
+     0   0.0%  000000014001A8A6: F3 0F 11 44 0B FC  movss       dword ptr [rbx+rcx-4],xmm0
+     0   0.0%  000000014001A8AC: F3 0F 10 40 08     movss       xmm0,dword ptr [rax+8]
+     0   0.0%  000000014001A8B1: F3 0F 11 44 13 FC  movss       dword ptr [rbx+rdx-4],xmm0
+     0   0.0%  000000014001A8B7: F3 42 0F 10 34 33  movss       xmm6,dword ptr [rbx+r14]
+     0   0.0%  000000014001A8BD: F3 0F 10 3B        movss       xmm7,dword ptr [rbx]
+     0   0.0%  000000014001A8C1: 0F 28 D6           movaps      xmm2,xmm6
+     0   0.0%  000000014001A8C4: F3 46 0F 10 04 03  movss       xmm8,dword ptr [rbx+r8]
+     0   0.0%  000000014001A8CA: 0F 28 C7           movaps      xmm0,xmm7
+     0   0.0%  000000014001A8CD: F3 0F 59 D6        mulss       xmm2,xmm6
+     0   0.0%  000000014001A8D1: 41 0F 28 C8        movaps      xmm1,xmm8
+     0   0.0%  000000014001A8D5: F3 0F 59 C7        mulss       xmm0,xmm7
+     0   0.0%  000000014001A8D9: F3 41 0F 59 C8     mulss       xmm1,xmm8
+     0   0.0%  000000014001A8DE: F3 0F 58 D0        addss       xmm2,xmm0
+     0   0.0%  000000014001A8E2: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001A8E5: F3 0F 58 D1        addss       xmm2,xmm1
+     0   0.0%  000000014001A8E9: 0F 2E C2           ucomiss     xmm0,xmm2
+     0   0.0%  000000014001A8EC: 77 09              ja          000000014001A8F7
+     0   0.0%  000000014001A8EE: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001A8F1: F3 0F 51 C2        sqrtss      xmm0,xmm2
+     0   0.0%  000000014001A8F5: EB 14              jmp         000000014001A90B
+     0   0.0%  000000014001A8F7: 0F 28 C2           movaps      xmm0,xmm2
+     0   0.0%  000000014001A8FA: E8 7F 3E 00 00     call        sqrtf
+     0   0.0%  000000014001A8FF: 48 8B 4D 67        mov         rcx,qword ptr [rbp+67h]
+     0   0.0%  000000014001A903: 48 8B 55 6F        mov         rdx,qword ptr [rbp+6Fh]
+     0   0.0%  000000014001A907: 4C 8B 45 77        mov         r8,qword ptr [rbp+77h]
+     0   0.0%  000000014001A90B: 41 0F 2F C1        comiss      xmm0,xmm9
+     0   0.0%  000000014001A90F: 76 23              jbe         000000014001A934
+     0   0.0%  000000014001A911: F3 0F 5E F0        divss       xmm6,xmm0
+     0   0.0%  000000014001A915: 48 8D 45 A7        lea         rax,[rbp-59h]
+     0   0.0%  000000014001A919: F3 0F 5E F8        divss       xmm7,xmm0
+     0   0.0%  000000014001A91D: F3 44 0F 5E C0     divss       xmm8,xmm0
+     0   0.0%  000000014001A922: F3 0F 11 75 A7     movss       dword ptr [rbp-59h],xmm6
+     0   0.0%  000000014001A927: F3 0F 11 7D AB     movss       dword ptr [rbp-55h],xmm7
+     0   0.0%  000000014001A92C: F3 44 0F 11 45 AF  movss       dword ptr [rbp-51h],xmm8
+     0   0.0%  000000014001A932: EB 13              jmp         000000014001A947
+     0   0.0%  000000014001A934: 48 C7 45 B3 00 00  mov         qword ptr [rbp-4Dh],0
+     0   0.0%  000000014001A93C: 48 8D 45 B3        lea         rax,[rbp-4Dh]
+     0   0.0%  000000014001A940: C7 45 BB 00 00 00  mov         dword ptr [rbp-45h],0
+     0   0.0%  000000014001A947: F2 0F 10 08        movsd       xmm1,mmword ptr [rax]
+     0   0.0%  000000014001A94B: F3 42 0F 11 0C 2B  movss       dword ptr [rbx+r13],xmm1
+     0   0.0%  000000014001A951: 0F 28 C1           movaps      xmm0,xmm1
+     0   0.0%  000000014001A954: 0F C6 C0 55        shufps      xmm0,xmm0,55h
+     0   0.0%  000000014001A958: F3 0F 11 04 0B     movss       dword ptr [rbx+rcx],xmm0
+     0   0.0%  000000014001A95D: F3 0F 10 40 08     movss       xmm0,dword ptr [rax+8]
+     0   0.0%  000000014001A962: F3 0F 11 04 13     movss       dword ptr [rbx+rdx],xmm0
+     0   0.0%  000000014001A967: F3 41 0F 10 74 1E  movss       xmm6,dword ptr [r14+rbx+4]
+     0   0.0%  000000014001A96E: F3 0F 10 7B 04     movss       xmm7,dword ptr [rbx+4]
+     0   0.0%  000000014001A973: 0F 28 C6           movaps      xmm0,xmm6
+     0   0.0%  000000014001A976: F3 45 0F 10 44 18  movss       xmm8,dword ptr [r8+rbx+4]
+     0   0.0%  000000014001A97D: 0F 28 D7           movaps      xmm2,xmm7
+     0   0.0%  000000014001A980: F3 0F 59 D7        mulss       xmm2,xmm7
+     0   0.0%  000000014001A984: 41 0F 28 C8        movaps      xmm1,xmm8
+     0   0.0%  000000014001A988: F3 0F 59 C6        mulss       xmm0,xmm6
+     0   0.0%  000000014001A98C: F3 41 0F 59 C8     mulss       xmm1,xmm8
+     0   0.0%  000000014001A991: F3 0F 58 D0        addss       xmm2,xmm0
+     0   0.0%  000000014001A995: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001A998: F3 0F 58 D1        addss       xmm2,xmm1
+     0   0.0%  000000014001A99C: 0F 2E C2           ucomiss     xmm0,xmm2
+     0   0.0%  000000014001A99F: 77 09              ja          000000014001A9AA
+     0   0.0%  000000014001A9A1: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001A9A4: F3 0F 51 C2        sqrtss      xmm0,xmm2
+     0   0.0%  000000014001A9A8: EB 14              jmp         000000014001A9BE
+     0   0.0%  000000014001A9AA: 0F 28 C2           movaps      xmm0,xmm2
+     0   0.0%  000000014001A9AD: E8 CC 3D 00 00     call        sqrtf
+     0   0.0%  000000014001A9B2: 48 8B 4D 67        mov         rcx,qword ptr [rbp+67h]
+     0   0.0%  000000014001A9B6: 48 8B 55 6F        mov         rdx,qword ptr [rbp+6Fh]
+     0   0.0%  000000014001A9BA: 4C 8B 45 77        mov         r8,qword ptr [rbp+77h]
+     0   0.0%  000000014001A9BE: 41 0F 2F C1        comiss      xmm0,xmm9
+     0   0.0%  000000014001A9C2: 76 23              jbe         000000014001A9E7
+     0   0.0%  000000014001A9C4: F3 0F 5E F0        divss       xmm6,xmm0
+     0   0.0%  000000014001A9C8: 48 8D 45 A7        lea         rax,[rbp-59h]
+     0   0.0%  000000014001A9CC: F3 0F 5E F8        divss       xmm7,xmm0
+     0   0.0%  000000014001A9D0: F3 44 0F 5E C0     divss       xmm8,xmm0
+     0   0.0%  000000014001A9D5: F3 0F 11 75 A7     movss       dword ptr [rbp-59h],xmm6
+     0   0.0%  000000014001A9DA: F3 0F 11 7D AB     movss       dword ptr [rbp-55h],xmm7
+     0   0.0%  000000014001A9DF: F3 44 0F 11 45 AF  movss       dword ptr [rbp-51h],xmm8
+     0   0.0%  000000014001A9E5: EB 13              jmp         000000014001A9FA
+     0   0.0%  000000014001A9E7: 48 C7 45 B3 00 00  mov         qword ptr [rbp-4Dh],0
+     0   0.0%  000000014001A9EF: 48 8D 45 B3        lea         rax,[rbp-4Dh]
+     0   0.0%  000000014001A9F3: C7 45 BB 00 00 00  mov         dword ptr [rbp-45h],0
+     0   0.0%  000000014001A9FA: F2 0F 10 08        movsd       xmm1,mmword ptr [rax]
+     0   0.0%  000000014001A9FE: F3 42 0F 11 4C 2B  movss       dword ptr [rbx+r13+4],xmm1
+     0   0.0%  000000014001AA05: 0F 28 C1           movaps      xmm0,xmm1
+     0   0.0%  000000014001AA08: 0F C6 C0 55        shufps      xmm0,xmm0,55h
+     0   0.0%  000000014001AA0C: F3 0F 11 44 0B 04  movss       dword ptr [rbx+rcx+4],xmm0
+     0   0.0%  000000014001AA12: F3 0F 10 40 08     movss       xmm0,dword ptr [rax+8]
+     0   0.0%  000000014001AA17: F3 0F 11 44 13 04  movss       dword ptr [rbx+rdx+4],xmm0
+     0   0.0%  000000014001AA1D: F3 42 0F 10 74 33  movss       xmm6,dword ptr [rbx+r14+8]
+     0   0.0%  000000014001AA24: F3 0F 10 7B 08     movss       xmm7,dword ptr [rbx+8]
+     0   0.0%  000000014001AA29: 0F 28 C6           movaps      xmm0,xmm6
+     0   0.0%  000000014001AA2C: F3 46 0F 10 44 03  movss       xmm8,dword ptr [rbx+r8+8]
+     0   0.0%  000000014001AA33: 0F 28 D7           movaps      xmm2,xmm7
+     0   0.0%  000000014001AA36: F3 0F 59 D7        mulss       xmm2,xmm7
+     0   0.0%  000000014001AA3A: 41 0F 28 C8        movaps      xmm1,xmm8
+     0   0.0%  000000014001AA3E: F3 0F 59 C6        mulss       xmm0,xmm6
+     0   0.0%  000000014001AA42: F3 41 0F 59 C8     mulss       xmm1,xmm8
+     0   0.0%  000000014001AA47: F3 0F 58 D0        addss       xmm2,xmm0
+     0   0.0%  000000014001AA4B: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001AA4E: F3 0F 58 D1        addss       xmm2,xmm1
+     0   0.0%  000000014001AA52: 0F 2E C2           ucomiss     xmm0,xmm2
+     0   0.0%  000000014001AA55: 77 09              ja          000000014001AA60
+     0   0.0%  000000014001AA57: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001AA5A: F3 0F 51 C2        sqrtss      xmm0,xmm2
+     0   0.0%  000000014001AA5E: EB 14              jmp         000000014001AA74
+     0   0.0%  000000014001AA60: 0F 28 C2           movaps      xmm0,xmm2
+     0   0.0%  000000014001AA63: E8 16 3D 00 00     call        sqrtf
+     0   0.0%  000000014001AA68: 48 8B 4D 67        mov         rcx,qword ptr [rbp+67h]
+     0   0.0%  000000014001AA6C: 48 8B 55 6F        mov         rdx,qword ptr [rbp+6Fh]
+     0   0.0%  000000014001AA70: 4C 8B 45 77        mov         r8,qword ptr [rbp+77h]
+     0   0.0%  000000014001AA74: 41 0F 2F C1        comiss      xmm0,xmm9
+     0   0.0%  000000014001AA78: 76 23              jbe         000000014001AA9D
+     0   0.0%  000000014001AA7A: F3 0F 5E F0        divss       xmm6,xmm0
+     0   0.0%  000000014001AA7E: 48 8D 45 A7        lea         rax,[rbp-59h]
+     0   0.0%  000000014001AA82: F3 0F 5E F8        divss       xmm7,xmm0
+     0   0.0%  000000014001AA86: F3 44 0F 5E C0     divss       xmm8,xmm0
+     0   0.0%  000000014001AA8B: F3 0F 11 75 A7     movss       dword ptr [rbp-59h],xmm6
+     0   0.0%  000000014001AA90: F3 0F 11 7D AB     movss       dword ptr [rbp-55h],xmm7
+     0   0.0%  000000014001AA95: F3 44 0F 11 45 AF  movss       dword ptr [rbp-51h],xmm8
+     0   0.0%  000000014001AA9B: EB 13              jmp         000000014001AAB0
+     0   0.0%  000000014001AA9D: 48 C7 45 B3 00 00  mov         qword ptr [rbp-4Dh],0
+     0   0.0%  000000014001AAA5: 48 8D 45 B3        lea         rax,[rbp-4Dh]
+     0   0.0%  000000014001AAA9: C7 45 BB 00 00 00  mov         dword ptr [rbp-45h],0
+     0   0.0%  000000014001AAB0: F2 0F 10 08        movsd       xmm1,mmword ptr [rax]
+     0   0.0%  000000014001AAB4: F3 42 0F 11 4C 2B  movss       dword ptr [rbx+r13+8],xmm1
+     0   0.0%  000000014001AABB: 0F 28 C1           movaps      xmm0,xmm1
+     0   0.0%  000000014001AABE: 0F C6 C0 55        shufps      xmm0,xmm0,55h
+     0   0.0%  000000014001AAC2: F3 0F 11 44 0B 08  movss       dword ptr [rbx+rcx+8],xmm0
+     0   0.0%  000000014001AAC8: F3 0F 10 40 08     movss       xmm0,dword ptr [rax+8]
+     0   0.0%  000000014001AACD: F3 0F 11 44 13 08  movss       dword ptr [rbx+rdx+8],xmm0
+     0   0.0%  000000014001AAD3: 48 83 C3 10        add         rbx,10h
+     0   0.0%  000000014001AAD7: 49 83 EC 01        sub         r12,1
+     0   0.0%  000000014001AADB: 0F 85 20 FD FF FF  jne         000000014001A801
+     0   0.0%  000000014001AAE1: 4C 3B FF           cmp         r15,rdi
+     0   0.0%  000000014001AAE4: 0F 83 F5 00 00 00  jae         000000014001ABDF
+     0   0.0%  000000014001AAEA: 4C 8B 5D 87        mov         r11,qword ptr [rbp-79h]
+     0   0.0%  000000014001AAEE: 4C 8B 65 9F        mov         r12,qword ptr [rbp-61h]
+     0   0.0%  000000014001AAF2: 4C 8B 6D 97        mov         r13,qword ptr [rbp-69h]
+     0   0.0%  000000014001AAF6: 48 8B 4D 8F        mov         rcx,qword ptr [rbp-71h]
+     0   0.0%  000000014001AAFA: 4A 8D 1C BE        lea         rbx,[rsi+r15*4]
+     0   0.0%  000000014001AAFE: 48 8B 45 7F        mov         rax,qword ptr [rbp+7Fh]
+     0   0.0%  000000014001AB02: 48 2B CE           sub         rcx,rsi
+     0   0.0%  000000014001AB05: 48 2B C6           sub         rax,rsi
+     0   0.0%  000000014001AB08: 48 89 4D 8F        mov         qword ptr [rbp-71h],rcx
+     0   0.0%  000000014001AB0C: 4C 2B DE           sub         r11,rsi
+     0   0.0%  000000014001AB0F: 48 89 45 7F        mov         qword ptr [rbp+7Fh],rax
+     0   0.0%  000000014001AB13: 4C 2B E6           sub         r12,rsi
+     0   0.0%  000000014001AB16: 4C 89 5D 87        mov         qword ptr [rbp-79h],r11
+     0   0.0%  000000014001AB1A: 4C 2B EE           sub         r13,rsi
+     0   0.0%  000000014001AB1D: 49 2B FF           sub         rdi,r15
+     0   0.0%  000000014001AB20: F3 0F 10 34 0B     movss       xmm6,dword ptr [rbx+rcx]
+     0   0.0%  000000014001AB25: F3 0F 10 3B        movss       xmm7,dword ptr [rbx]
+     0   0.0%  000000014001AB29: 0F 28 D6           movaps      xmm2,xmm6
+     0   0.0%  000000014001AB2C: F3 44 0F 10 04 03  movss       xmm8,dword ptr [rbx+rax]
+     0   0.0%  000000014001AB32: 0F 28 C7           movaps      xmm0,xmm7
+     0   0.0%  000000014001AB35: F3 0F 59 D6        mulss       xmm2,xmm6
+     0   0.0%  000000014001AB39: 41 0F 28 C8        movaps      xmm1,xmm8
+     0   0.0%  000000014001AB3D: F3 0F 59 C7        mulss       xmm0,xmm7
+     0   0.0%  000000014001AB41: F3 41 0F 59 C8     mulss       xmm1,xmm8
+     0   0.0%  000000014001AB46: F3 0F 58 D0        addss       xmm2,xmm0
+     0   0.0%  000000014001AB4A: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001AB4D: F3 0F 58 D1        addss       xmm2,xmm1
+     0   0.0%  000000014001AB51: 0F 2E C2           ucomiss     xmm0,xmm2
+     0   0.0%  000000014001AB54: 77 09              ja          000000014001AB5F
+     0   0.0%  000000014001AB56: 0F 57 C0           xorps       xmm0,xmm0
+     0   0.0%  000000014001AB59: F3 0F 51 C2        sqrtss      xmm0,xmm2
+     0   0.0%  000000014001AB5D: EB 10              jmp         000000014001AB6F
+     0   0.0%  000000014001AB5F: 0F 28 C2           movaps      xmm0,xmm2
+     0   0.0%  000000014001AB62: E8 17 3C 00 00     call        sqrtf
+     0   0.0%  000000014001AB67: 4C 8B 5D 87        mov         r11,qword ptr [rbp-79h]
+     0   0.0%  000000014001AB6B: 48 8B 4D 8F        mov         rcx,qword ptr [rbp-71h]
+     0   0.0%  000000014001AB6F: 41 0F 2F C1        comiss      xmm0,xmm9
+     0   0.0%  000000014001AB73: 76 23              jbe         000000014001AB98
+     0   0.0%  000000014001AB75: F3 0F 5E F0        divss       xmm6,xmm0
+     0   0.0%  000000014001AB79: 48 8D 45 A7        lea         rax,[rbp-59h]
+     0   0.0%  000000014001AB7D: F3 0F 5E F8        divss       xmm7,xmm0
+     0   0.0%  000000014001AB81: F3 44 0F 5E C0     divss       xmm8,xmm0
+     0   0.0%  000000014001AB86: F3 0F 11 75 A7     movss       dword ptr [rbp-59h],xmm6
+     0   0.0%  000000014001AB8B: F3 0F 11 7D AB     movss       dword ptr [rbp-55h],xmm7
+     0   0.0%  000000014001AB90: F3 44 0F 11 45 AF  movss       dword ptr [rbp-51h],xmm8
+     0   0.0%  000000014001AB96: EB 13              jmp         000000014001ABAB
+     0   0.0%  000000014001AB98: 48 C7 45 B3 00 00  mov         qword ptr [rbp-4Dh],0
+     0   0.0%  000000014001ABA0: 48 8D 45 B3        lea         rax,[rbp-4Dh]
+     0   0.0%  000000014001ABA4: C7 45 BB 00 00 00  mov         dword ptr [rbp-45h],0
+     0   0.0%  000000014001ABAB: F2 0F 10 08        movsd       xmm1,mmword ptr [rax]
+     0   0.0%  000000014001ABAF: F3 42 0F 11 0C 1B  movss       dword ptr [rbx+r11],xmm1
+     0   0.0%  000000014001ABB5: 0F 28 C1           movaps      xmm0,xmm1
+     0   0.0%  000000014001ABB8: 0F C6 C0 55        shufps      xmm0,xmm0,55h
+     0   0.0%  000000014001ABBC: F3 42 0F 11 04 23  movss       dword ptr [rbx+r12],xmm0
+     0   0.0%  000000014001ABC2: F3 0F 10 40 08     movss       xmm0,dword ptr [rax+8]
+     0   0.0%  000000014001ABC7: 48 8B 45 7F        mov         rax,qword ptr [rbp+7Fh]
+     0   0.0%  000000014001ABCB: F3 42 0F 11 04 2B  movss       dword ptr [rbx+r13],xmm0
+     0   0.0%  000000014001ABD1: 48 83 C3 04        add         rbx,4
+     0   0.0%  000000014001ABD5: 48 83 EF 01        sub         rdi,1
+     0   0.0%  000000014001ABD9: 0F 85 41 FF FF FF  jne         000000014001AB20
+     0   0.0%  000000014001ABDF: 44 0F 28 84 24 80  movaps      xmm8,xmmword ptr [rsp+80h]
+     0   0.0%  000000014001ABE8: 0F 28 BC 24 90 00  movaps      xmm7,xmmword ptr [rsp+90h]
+     0   0.0%  000000014001ABF0: 48 8B 9C 24 B8 00  mov         rbx,qword ptr [rsp+0B8h]
+     0   0.0%  000000014001ABF8: 44 0F 28 4C 24 70  movaps      xmm9,xmmword ptr [rsp+70h]
+     0   0.0%  000000014001ABFE: 0F 28 B4 24 A0 00  movaps      xmm6,xmmword ptr [rsp+0A0h]
+     0   0.0%  000000014001AC06: 48 81 C4 C0 00 00  add         rsp,0C0h
+     0   0.0%  000000014001AC0D: 41 5F              pop         r15
+     0   0.0%  000000014001AC0F: 41 5E              pop         r14
+     0   0.0%  000000014001AC11: 41 5D              pop         r13
+     0   0.0%  000000014001AC13: 41 5C              pop         r12
+     0   0.0%  000000014001AC15: 5F                 pop         rdi
+     0   0.0%  000000014001AC16: 5E                 pop         rsi
+     0   0.0%  000000014001AC17: 5D                 pop         rbp
+     0   0.0%  000000014001AC18: C3                 ret
+     0   0.0%  000000014001AC19: CC CC CC CC CC CC CC                             IIIIIII
+total samples in function: 2085
+

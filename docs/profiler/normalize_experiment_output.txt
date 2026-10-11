@@ -1,0 +1,3 @@
+Normalized() (ternary + temporary) : 3.480 ns/elem
+explicit if, no temporary          : 2.309 ns/elem
+different results                  : 0

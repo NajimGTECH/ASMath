@@ -313,4 +313,4 @@ Nous (Najim et Tristan) avons utilisé **Claude (Anthropic)** comme assistant po
 - **aider à collecter et analyser les traces du profiler CPU** ;
 - **aider à rédiger ce README** et le rapport.
 
-Toutes les mesures viennent d'exécutions réelles du programme sur la machine indiquée (résultats bruts dans `Benchmark/results/`). Le code a été relu, compris et testé par nous ; chacun de nous doit pouvoir l'expliquer et le modifier pendant la revue de code.
+Toutes les mesures viennent d'exécutions réelles du programme sur la machine indiquée (résultats bruts dans `Benchmark/results/`). Le code a été relu, compris et testé par nous.

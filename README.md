@@ -304,7 +304,7 @@ Intel Intrinsics Guide ; Microsoft Learn (convention d'appel x64, MASM `ml64`, `
 
 ## Utilisation de l'IA
 
-Nous (Najim et Tristan) avons utilisé **Claude (Anthropic)** comme assistant pour :
+Nous avons utilisé l'IA comme assistant pour :
 
 - **mieux comprendre le cahier des charges** et l'objectif du projet ;
 - **comprendre les fonctions intrinsèques** (SSE/SSE2) et ce qu'elles font sur les registres ;
